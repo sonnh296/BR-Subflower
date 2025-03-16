@@ -40,6 +40,10 @@ public class Users {
     @JsonIgnore
     private Set<UserRole> user_roles;
 
+    @OneToOne(mappedBy = "user")
+    @JsonIgnore
+    private Cart cart;
+
     @PrePersist
     public void onCreate() {
         if(oAuth2 == null) {

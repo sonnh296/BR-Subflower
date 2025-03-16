@@ -1,4 +1,4 @@
-package com.hls.sunflower.service.ServiceImpl;
+package com.hls.sunflower.service.serviceImpl;
 
 import com.hls.sunflower.dao.RoleRepository;
 import com.hls.sunflower.dto.response.RoleResponse;

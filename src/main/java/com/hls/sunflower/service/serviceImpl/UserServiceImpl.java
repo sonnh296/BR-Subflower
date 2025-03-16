@@ -1,4 +1,4 @@
-package com.hls.sunflower.service.ServiceImpl;
+package com.hls.sunflower.service.serviceImpl;
 
 import com.hls.sunflower.dao.RoleRepository;
 import com.hls.sunflower.dao.UserRoleRepository;
@@ -6,7 +6,6 @@ import com.hls.sunflower.dao.UsersRepository;
 import com.hls.sunflower.dto.request.UserCreationRequest;
 import com.hls.sunflower.dto.request.UserUpdateRequest;
 import com.hls.sunflower.dto.response.UserResponse;
-import com.hls.sunflower.entity.Role;
 import com.hls.sunflower.entity.UserRole;
 import com.hls.sunflower.entity.Users;
 import com.hls.sunflower.exception.AppException;
@@ -22,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
