@@ -140,6 +140,6 @@ public class CartServiceImpl implements CartService {
         var context = SecurityContextHolder.getContext();
         String name = context.getAuthentication().getName();
 
-        return usersRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_EXISTED));
+        return usersRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 }

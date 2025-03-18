@@ -66,7 +66,7 @@ public class UserController {
                 .result(userService.getByUsername(username))
                 .build();
     }
-    @GetMapping("/myInfo")
+    @GetMapping("/my-info")
     ApiResponse<UserResponse> getMyInfo() {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.getMyInfo())
