@@ -2,6 +2,7 @@ package com.hls.sunflower.service.serviceImpl;
 
 import com.hls.sunflower.dao.ProductItemRepository;
 import com.hls.sunflower.dao.specification.ProductItemSpecification;
+import com.hls.sunflower.dto.request.ProductItemRequest;
 import com.hls.sunflower.dto.response.ProductItemResponse;
 import com.hls.sunflower.entity.ProductItem;
 import com.hls.sunflower.exception.AppException;
@@ -40,6 +41,13 @@ public class ProductItemServiceImpl implements ProductItemService {
     public ProductItemResponse getById(String id) {
         ProductItem productItem = productItemRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PRODUCT_ITEM_NOT_EXISTED));
         return productItemMapper.toProductItemResponse(productItem);
+    }
+
+    @Override
+    public ProductItemResponse updateProductItem(String productItemId, ProductItemRequest request) {
+        ProductItem productItem = productItemRepository.findById(productItemId).orElseThrow(() -> new AppException(ErrorCode.PRODUCT_ITEM_NOT_EXISTED));
+        productItemMapper.updateProductItemFromRequest(request, productItem);
+        return productItemMapper.toProductItemResponse(productItemRepository.save(productItem));
     }
 
     @Override

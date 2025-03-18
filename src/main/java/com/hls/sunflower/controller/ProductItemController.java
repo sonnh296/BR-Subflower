@@ -1,5 +1,6 @@
 package com.hls.sunflower.controller;
 
+import com.hls.sunflower.dto.request.ProductItemRequest;
 import com.hls.sunflower.dto.response.ApiResponse;
 import com.hls.sunflower.dto.response.ProductItemResponse;
 import com.hls.sunflower.service.ProductItemService;
@@ -35,8 +36,15 @@ public class ProductItemController {
                 .build();
     }
 
+    @PutMapping("/{productItemId}")
+    public ApiResponse<ProductItemResponse> updateProductItem(@PathVariable String productItemId, @RequestBody ProductItemRequest request) {
+        return ApiResponse.<ProductItemResponse>builder()
+                .result(productItemService.updateProductItem(productItemId, request))
+                .build();
+    }
+
     @RequestMapping(value = "/{productItemId}", method = RequestMethod.DELETE)
-    public ApiResponse<String> deleteProduct(@PathVariable String productItemId) {
+    public ApiResponse<String> deleteProductItem(@PathVariable String productItemId) {
         productItemService.deleteProductItem(productItemId);
         return ApiResponse.<String>builder()
                 .result("Product has been deleted")
