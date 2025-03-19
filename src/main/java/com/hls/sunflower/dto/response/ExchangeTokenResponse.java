@@ -2,6 +2,7 @@ package com.hls.sunflower.dto.response;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,4 +19,3 @@ public class ExchangeTokenResponse {
     String scope;
     String tokenType;
 }
-

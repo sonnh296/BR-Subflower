@@ -1,21 +1,24 @@
 package com.hls.sunflower.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hls.sunflower.dto.response.ApiResponse;
-import com.hls.sunflower.exception.ErrorCode;
+import java.io.IOException;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hls.sunflower.dto.response.ApiResponse;
+import com.hls.sunflower.exception.ErrorCode;
 
-//handle authentication failed in Spring Security
+// handle authentication failed in Spring Security
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+    public void commence(
+            HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
             throws IOException, ServletException {
         ErrorCode errorCode = ErrorCode.UNAUTHENTICATED;
 
@@ -29,7 +32,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        //convert apiResponse -> String
+        // convert apiResponse -> String
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
 
         //

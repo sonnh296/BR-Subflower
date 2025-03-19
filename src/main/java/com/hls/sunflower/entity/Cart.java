@@ -1,10 +1,12 @@
 package com.hls.sunflower.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.Set;
+
+import jakarta.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -22,7 +24,9 @@ public class Cart {
     @JoinColumn(name = "user_id")
     private Users user;
 
-    @OneToMany(mappedBy = "cart", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(
+            mappedBy = "cart",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JsonIgnore
     private Set<CartItem> cartItems;
 }

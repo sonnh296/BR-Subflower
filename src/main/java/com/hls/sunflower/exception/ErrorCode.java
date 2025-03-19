@@ -1,8 +1,9 @@
 package com.hls.sunflower.exception;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+
+import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
@@ -20,6 +21,7 @@ public enum ErrorCode {
     CART_ITEM_NOT_EXISTED(4001, "Cart item not existed", HttpStatus.NOT_FOUND),
     PRODUCT_OUT_OF_STOCK(4001, "larger quantity than stock product", HttpStatus.BAD_REQUEST),
     ;
+
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
         this.message = message;

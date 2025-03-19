@@ -2,7 +2,6 @@ server:
   port: 8080
   servlet:
     context-path: /api
-
 #db configuration
 spring:
   servlet:
@@ -19,8 +18,6 @@ spring:
       ddl-auto: update
     show-sql: true
 
-
-
 jwt:
   signerKey: "ZcCAeQKy0ly5bPdCVHM8bLQp5KJX9eczTqZl7zhjzK42U7SXfALZcWpSjitA5tLX"
   valid-duration: 36000 # in second .
@@ -32,3 +29,4 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /api-docs
+

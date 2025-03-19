@@ -1,10 +1,12 @@
 package com.hls.sunflower.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.Set;
+
+import jakarta.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -22,7 +24,7 @@ public class Role {
     @Column
     private String roleName;
 
-    @OneToMany(mappedBy="role")
+    @OneToMany(mappedBy = "role")
     @JsonIgnore
     private Set<UserRole> user_roles;
 }

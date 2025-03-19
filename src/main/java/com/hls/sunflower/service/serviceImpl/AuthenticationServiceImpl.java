@@ -1,10 +1,16 @@
 package com.hls.sunflower.service.serviceImpl;
 
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.RestTemplate;
+
 import com.hls.sunflower.dao.InvalidatedTokenRepository;
 import com.hls.sunflower.dao.RoleRepository;
 import com.hls.sunflower.dao.UsersRepository;
@@ -19,18 +25,14 @@ import com.hls.sunflower.entity.Users;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
 import com.hls.sunflower.service.AuthenticationService;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.RestTemplate;
-
-import java.text.ParseException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
 
 @Service
 @Slf4j
@@ -69,7 +71,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     private String GRANT_TYPE = "authorization_code";
 
-    public AuthenticationServiceImpl(UsersRepository usersRepository, RoleRepository roleRepository, InvalidatedTokenRepository invalidatedTokenRepository, PasswordEncoder passwordEncoder, OutboundIdentityClient outboundIdentityClient, OutBoundUserClient outBoundUserClient, RestTemplate restTemplate) {
+    public AuthenticationServiceImpl(
+            UsersRepository usersRepository,
+            RoleRepository roleRepository,
+            InvalidatedTokenRepository invalidatedTokenRepository,
+            PasswordEncoder passwordEncoder,
+            OutboundIdentityClient outboundIdentityClient,
+            OutBoundUserClient outBoundUserClient,
+            RestTemplate restTemplate) {
         this.usersRepository = usersRepository;
         this.roleRepository = roleRepository;
         this.invalidatedTokenRepository = invalidatedTokenRepository;
@@ -89,29 +98,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             isValid = false;
         }
 
-        return IntrospectResponse.builder()
-                .valid(isValid)
-                .build();
+        return IntrospectResponse.builder().valid(isValid).build();
     }
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        var user = usersRepository.findByUsername(request.getUsername())
+        var user = usersRepository
+                .findByUsername(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        boolean authenticated =  passwordEncoder.matches(request.getPassword(), user.getPassword());
+        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
-        if(!authenticated || user.getOAuth2())
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        if (!authenticated || user.getOAuth2()) throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         // login success -> create token
         var token = generateToken(user);
 
-        return AuthenticationResponse.builder()
-                .token(token)
-                .authenticated(true)
-                .build();
-
+        return AuthenticationResponse.builder().token(token).authenticated(true).build();
     }
 
     @Override
@@ -129,67 +132,62 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var userInfo = outBoundUserClient.getUserInfo("json", response.getAccessToken());
         log.info("USER INFO {}", userInfo);
 
-        var user = usersRepository.findByUsername(userInfo.getEmail()).orElseGet(
-                () -> {
-                    Users newUser = Users.builder()
-                            .username(userInfo.getEmail())
-                            .avatarUrl(userInfo.getPicture())
-                            .email(userInfo.getEmail())
-                            .fullName(userInfo.getName())
-                            .oAuth2(true)
-                            .build();
-                    //add role User
-                    Set<UserRole> userRoles = new HashSet<>();
-                    UserRole userRole = new UserRole();
-                    userRole.setRole(roleRepository.findByRoleName("USER"));
-                    userRole.setUser(newUser);
-                    userRoles.add(userRole);
-                    newUser.setUser_roles(userRoles);
-                    return usersRepository.save(newUser);
-                }
-        );
+        var user = usersRepository.findByUsername(userInfo.getEmail()).orElseGet(() -> {
+            Users newUser = Users.builder()
+                    .username(userInfo.getEmail())
+                    .avatarUrl(userInfo.getPicture())
+                    .email(userInfo.getEmail())
+                    .fullName(userInfo.getName())
+                    .oAuth2(true)
+                    .build();
+            // add role User
+            Set<UserRole> userRoles = new HashSet<>();
+            UserRole userRole = new UserRole();
+            userRole.setRole(roleRepository.findByRoleName("USER"));
+            userRole.setUser(newUser);
+            userRoles.add(userRole);
+            newUser.setUser_roles(userRoles);
+            return usersRepository.save(newUser);
+        });
 
         var token = generateToken(user);
 
-        return AuthenticationResponse.builder()
-                .token(token)
-                .authenticated(true)
-                .build();
-
+        return AuthenticationResponse.builder().token(token).authenticated(true).build();
     }
 
-
     @Override
-    public String generateToken(Users user){
+    public String generateToken(Users user) {
         // header : xac dinh thuat toan ma hoa cho jwt
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
-        //tao body cho payload JWTClaimsSet
-        JWTClaimsSet jwtClaimsSet =  new JWTClaimsSet.Builder()
+        // tao body cho payload JWTClaimsSet
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getUsername())
                 .issuer("oppo.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli() // het han sau VALID_DURATION giây
-                ))
-                .jwtID(UUID.randomUUID().toString())  //token ID
-//                .claim("customClaim", "custom") //custom claim
+                        Instant.now()
+                                .plus(VALID_DURATION, ChronoUnit.SECONDS)
+                                .toEpochMilli() // het han sau VALID_DURATION giây
+                        ))
+                .jwtID(UUID.randomUUID().toString()) // token ID
+                //                .claim("customClaim", "custom") //custom claim
                 .claim("scope", buildScope(user)) // để spring security biết role thì cần claim có scope trong jwt
                 .claim("name", user.getFullName())
                 .claim("avatarUrl", user.getAvatarUrl())
                 .build();
 
-        //tao payload
+        // tao payload
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
-        JWSObject jwsObject = new JWSObject(header,payload);
+        JWSObject jwsObject = new JWSObject(header, payload);
 
-        //signature
+        // signature
         try {
             jwsObject.sign(new MACSigner(SIGN_KEY.getBytes()));
             return jwsObject.serialize();
-        }catch (JOSEException e){
-            log.error("Cannot create token",e);
+        } catch (JOSEException e) {
+            log.error("Cannot create token", e);
             throw new RuntimeException(e);
         }
     }
@@ -206,7 +204,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     InvalidatedToken.builder().id(jit).expiryTime(expiryTime).build();
 
             invalidatedTokenRepository.save(invalidatedToken);
-        } catch (AppException exception){
+        } catch (AppException exception) {
             log.info("Token already expired");
         }
     }
@@ -218,9 +216,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
         InvalidatedToken invalidatedToken =
-                InvalidatedToken.builder()
-                        .id(jit)
-                        .expiryTime(expiryTime).build();
+                InvalidatedToken.builder().id(jit).expiryTime(expiryTime).build();
 
         invalidatedTokenRepository.save(invalidatedToken);
 
@@ -242,10 +238,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         var verified = signedJWT.verify(verifier);
 
-        //check thoi han cua token
+        // check thoi han cua token
         Date expiryTime = (isRefresh)
-                ? new Date(signedJWT.getJWTClaimsSet().getIssueTime()
-                .toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli())
+                ? new Date(signedJWT
+                        .getJWTClaimsSet()
+                        .getIssueTime()
+                        .toInstant()
+                        .plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS)
+                        .toEpochMilli())
                 : signedJWT.getJWTClaimsSet().getExpirationTime();
 
         if (!(verified && expiryTime.after(new Date()))) throw new AppException(ErrorCode.UNAUTHENTICATED);

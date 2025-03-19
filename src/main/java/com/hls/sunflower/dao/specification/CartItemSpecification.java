@@ -1,7 +1,8 @@
 package com.hls.sunflower.dao.specification;
 
-import com.hls.sunflower.entity.CartItem;
 import org.springframework.data.jpa.domain.Specification;
+
+import com.hls.sunflower.entity.CartItem;
 
 public class CartItemSpecification {
     public static Specification<CartItem> equalUserId(String userId) {

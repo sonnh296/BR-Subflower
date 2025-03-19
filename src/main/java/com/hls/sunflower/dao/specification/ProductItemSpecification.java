@@ -1,7 +1,8 @@
 package com.hls.sunflower.dao.specification;
 
-import com.hls.sunflower.entity.ProductItem;
 import org.springframework.data.jpa.domain.Specification;
+
+import com.hls.sunflower.entity.ProductItem;
 
 public class ProductItemSpecification {
     public static Specification<ProductItem> equalProductId(String productId) {

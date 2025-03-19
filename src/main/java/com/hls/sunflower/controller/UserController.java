@@ -1,17 +1,19 @@
 package com.hls.sunflower.controller;
 
-import com.hls.sunflower.dto.request.UserCreationRequest;
-import com.hls.sunflower.dto.request.UserUpdateRequest;
-import com.hls.sunflower.dto.response.ApiResponse;
-import com.hls.sunflower.dto.response.UserResponse;
-import com.hls.sunflower.service.UserService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
+
+import com.hls.sunflower.dto.request.UserCreationRequest;
+import com.hls.sunflower.dto.request.UserUpdateRequest;
+import com.hls.sunflower.dto.response.ApiResponse;
+import com.hls.sunflower.dto.response.UserResponse;
+import com.hls.sunflower.service.UserService;
+
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/users")
@@ -34,8 +36,7 @@ public class UserController {
             @RequestParam(name = "pageNumber", required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(name = "pageSize", required = false, defaultValue = "5") Integer pageSize,
             @RequestParam(name = "sort", required = false, defaultValue = "ASC") String sort,
-            @RequestParam(name = "search", required = false, defaultValue = "") String search
-    ) {
+            @RequestParam(name = "search", required = false, defaultValue = "") String search) {
 
         Sort sortable = null;
         if (sort.toUpperCase().equals("ASC")) {
@@ -66,6 +67,7 @@ public class UserController {
                 .result(userService.getByUsername(username))
                 .build();
     }
+
     @GetMapping("/my-info")
     ApiResponse<UserResponse> getMyInfo() {
         return ApiResponse.<UserResponse>builder()
@@ -83,8 +85,6 @@ public class UserController {
     @RequestMapping(value = "/{userId}", method = RequestMethod.DELETE)
     public ApiResponse<String> deleteUser(@PathVariable String userId) {
         userService.deleteUser(userId);
-        return ApiResponse.<String>builder()
-                .result("User has been deleted")
-                .build();
+        return ApiResponse.<String>builder().result("User has been deleted").build();
     }
 }

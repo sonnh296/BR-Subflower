@@ -21,8 +21,15 @@ import org.springframework.web.client.RestTemplate;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-    private final String[] PUBLIC_ENDPOINTS =
-            {"/users/registration","/auth/token","/auth/outbound/authentication","/auth/introspect","/auth/logout","/auth/refresh", "/cloudinary/upload/image"};
+    private final String[] PUBLIC_ENDPOINTS = {
+        "/users/registration",
+        "/auth/token",
+        "/auth/outbound/authentication",
+        "/auth/introspect",
+        "/auth/logout",
+        "/auth/refresh",
+        "/cloudinary/upload/image"
+    };
 
     @Autowired
     @Lazy
@@ -34,28 +41,27 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
-        httpSecurity.authorizeHttpRequests(
-                configurer -> configurer
-                        .requestMatchers( HttpMethod.GET).permitAll()
-                        .requestMatchers( HttpMethod.POST,PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().authenticated()
-        );
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.authorizeHttpRequests(configurer -> configurer
+                .requestMatchers(HttpMethod.GET)
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
+                .permitAll()
+                .anyRequest()
+                .authenticated());
 
-        //Cấu hình xử lý token OAuth2
-        httpSecurity.oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(
-                        //giải mã token và xác minh tính hợp lệ của token
-                        jwtConfigurer -> jwtConfigurer.decoder(customJwtDecoder)
+        // Cấu hình xử lý token OAuth2
+        httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(
+                        // giải mã token và xác minh tính hợp lệ của token
+                        jwtConfigurer -> jwtConfigurer
+                                .decoder(customJwtDecoder)
 
-                        //chuyen doi JWT thanh Authentication -> thiet lap SecurityContextHolder cho Spring
-                        .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                )
-                        // xu ly truy cap khong co token hoac token khong hop le
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-        );
+                                // chuyen doi JWT thanh Authentication -> thiet lap SecurityContextHolder cho Spring
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                // xu ly truy cap khong co token hoac token khong hop le
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 
-        //validate
+        // validate
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
 
         return httpSecurity.build();
@@ -63,7 +69,7 @@ public class SecurityConfiguration {
 
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
-        //chuyển đổi các quyền từ token thành các đối tượng GrantedAuthority của Spring Security
+        // chuyển đổi các quyền từ token thành các đối tượng GrantedAuthority của Spring Security
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
 
