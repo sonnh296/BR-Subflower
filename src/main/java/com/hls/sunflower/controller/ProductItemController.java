@@ -46,8 +46,7 @@ public class ProductItemController {
     }
 
     @PostMapping
-    public ApiResponse<ProductItemResponse> addProductItem(
-            @RequestBody ProductItemRequest request) {
+    public ApiResponse<ProductItemResponse> addProductItem(@RequestBody ProductItemRequest request) {
         return ApiResponse.<ProductItemResponse>builder()
                 .result(productItemService.addProduct(request))
                 .build();

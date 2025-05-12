@@ -1,5 +1,15 @@
 package com.hls.sunflower.controller;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,16 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/virtual-try-on")
@@ -40,8 +40,7 @@ public class GenerateAIImage {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> processVirtualTryOn(
-            @RequestParam("humanImage") MultipartFile humanImage,
-            @RequestParam("clothImage") String clothImage) {
+            @RequestParam("humanImage") MultipartFile humanImage, @RequestParam("clothImage") String clothImage) {
 
         try {
             // Generate JWT token
@@ -62,8 +61,7 @@ public class GenerateAIImage {
 
             // Check if task submission was successful
             if (submitResponse.getInt("code") != 0) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Error submitting task: " + submitResponse.getString("message"));
             }
 
@@ -73,11 +71,15 @@ public class GenerateAIImage {
             // Poll for task completion
             JSONObject resultResponse = pollTaskCompletion(token, taskId);
 
-            if (resultResponse.getInt("code") == 0 &&
-                    resultResponse.getJSONObject("data").getString("task_status").equals("succeed")) {
+            if (resultResponse.getInt("code") == 0
+                    && resultResponse
+                            .getJSONObject("data")
+                            .getString("task_status")
+                            .equals("succeed")) {
 
                 // Extract the first image URL (assuming we want the first one)
-                JSONArray images = resultResponse.getJSONObject("data")
+                JSONArray images = resultResponse
+                        .getJSONObject("data")
                         .getJSONObject("task_result")
                         .getJSONArray("images");
 
@@ -90,8 +92,7 @@ public class GenerateAIImage {
 
                     return ResponseEntity.ok(response);
                 } else {
-                    return ResponseEntity
-                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body("No images generated");
                 }
             } else {
@@ -102,23 +103,21 @@ public class GenerateAIImage {
                     errorMsg += "Unknown error";
                 }
 
-                return ResponseEntity
-                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(errorMsg);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMsg);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error processing request: " + e.getMessage());
         }
     }
 
     private String generateToken(String ak, String sk) {
         try {
-            Date expiredAt = new Date(System.currentTimeMillis() + 1800*1000); // Valid time: current time + 1800s (30min)
-            Date notBefore = new Date(System.currentTimeMillis() - 5*1000); // Start time: current time - 5s
+            Date expiredAt =
+                    new Date(System.currentTimeMillis() + 1800 * 1000); // Valid time: current time + 1800s (30min)
+            Date notBefore = new Date(System.currentTimeMillis() - 5 * 1000); // Start time: current time - 5s
             Algorithm algo = Algorithm.HMAC256(sk);
             Map<String, Object> header = new HashMap<String, Object>();
             header.put("alg", "HS256");
@@ -136,8 +135,9 @@ public class GenerateAIImage {
 
     private String createRequestBody(String humanImageBase64, String clothImageBase64) {
         // Note: Adjust this method if the API requires cloth_image as URL instead of Base64
-        return String.format("{\"model_name\":\"%s\", \"human_image\":\"%s\",\"cloth_image\":\"%s\"}",
-            "kolors-virtual-try-on-v1-5", humanImageBase64, clothImageBase64);
+        return String.format(
+                "{\"model_name\":\"%s\", \"human_image\":\"%s\",\"cloth_image\":\"%s\"}",
+                "kolors-virtual-try-on-v1-5", humanImageBase64, clothImageBase64);
     }
 
     private JSONObject submitVirtualTryOnTask(String token, String requestBody) throws Exception {

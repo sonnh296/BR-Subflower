@@ -11,8 +11,8 @@ spring:
   datasource:
     url: "jdbc:mysql://localhost:3306/sunflower"
     driver-class-name: "com.mysql.cj.jdbc.Driver"
-    username: root
-    password: root
+    username: elsun
+    password: Sondeptrai12@
   jpa:
     hibernate:
       ddl-auto: update
@@ -30,3 +30,16 @@ springdoc:
   api-docs:
     path: /api-docs
 
+outbound:
+  identity:
+    client-id: "xxxxx"
+    client-secret: "yyyy"
+    redirect-uri: "http://localhost:5173/auth/sign-in"
+
+api:
+  access:
+    key: "528cc4f35e7544fa9a1a15609ee098b6"
+  secret:
+    key: "74018201beeb465a80dba81ea265227b"
+  base:
+    url: "https://api.klingai.com"

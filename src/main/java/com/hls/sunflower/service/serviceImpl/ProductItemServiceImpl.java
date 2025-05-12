@@ -1,7 +1,5 @@
 package com.hls.sunflower.service.serviceImpl;
 
-import com.hls.sunflower.dao.ProductRepository;
-import com.hls.sunflower.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -10,9 +8,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.hls.sunflower.dao.ProductItemRepository;
+import com.hls.sunflower.dao.ProductRepository;
 import com.hls.sunflower.dao.specification.ProductItemSpecification;
 import com.hls.sunflower.dto.request.ProductItemRequest;
 import com.hls.sunflower.dto.response.ProductItemResponse;
+import com.hls.sunflower.entity.Product;
 import com.hls.sunflower.entity.ProductItem;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
