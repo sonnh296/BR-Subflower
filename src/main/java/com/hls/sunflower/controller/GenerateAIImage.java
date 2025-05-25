@@ -136,8 +136,9 @@ public class GenerateAIImage {
     private String createRequestBody(String humanImageBase64, String clothImageBase64) {
         // Note: Adjust this method if the API requires cloth_image as URL instead of Base64
         return String.format(
-                "{\"model_name\":\"%s\", \"human_image\":\"%s\",\"cloth_image\":\"%s\"}",
-                "kolors-virtual-try-on-v1-5", humanImageBase64, clothImageBase64);
+                "{\"human_image\":\"%s\",\"human_image\":\"%s\",\"cloth_image\":\"%s\"}",
+                "kolors-virtual-try-on-v1-5",
+                humanImageBase64, clothImageBase64);
     }
 
     private JSONObject submitVirtualTryOnTask(String token, String requestBody) throws Exception {
@@ -158,6 +159,7 @@ public class GenerateAIImage {
 
         // Get response
         String response = readResponse(connection);
+        System.out.println("Response: " + response);
         return new JSONObject(response);
     }
 
@@ -172,6 +174,7 @@ public class GenerateAIImage {
 
         // Get response
         String response = readResponse(connection);
+
         return new JSONObject(response);
     }
 

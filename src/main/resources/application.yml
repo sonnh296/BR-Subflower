@@ -38,8 +38,8 @@ outbound:
 
 api:
   access:
-    key: "528cc4f35e7544fa9a1a15609ee098b6"
+    key: "b885d29687254095b3b15ab6433e097a"
   secret:
-    key: "74018201beeb465a80dba81ea265227b"
+    key: "18b5e0e0b7f54a0fa60b87db434ea4bf"
   base:
     url: "https://api.klingai.com"
