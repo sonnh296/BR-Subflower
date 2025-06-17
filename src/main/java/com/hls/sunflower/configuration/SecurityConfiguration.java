@@ -28,6 +28,7 @@ public class SecurityConfiguration {
         "/auth/introspect",
         "/auth/logout",
         "/auth/refresh",
+        "/virtual-try-on",
         "/cloudinary/upload/image"
     };
 
