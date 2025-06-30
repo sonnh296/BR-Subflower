@@ -42,4 +42,4 @@ api:
   secret:
     key: "rLRN4btGybEDMh3QHHGBELYkkCNQK8Tt"
   base:
-    url: "https://api.klingai.com"
+    url: "https://api-singapore.klingai.com"
