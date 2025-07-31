@@ -38,8 +38,8 @@ outbound:
 
 api:
   access:
-    key: "AfQ4BKKGT8ykmTrJBP8LLyJea4CAQABC"
+    key: "AKGhfMMmYBg3F3hYdEPDGQyALhRDbemL
   secret:
-    key: "rLRN4btGybEDMh3QHHGBELYkkCNQK8Tt"
+    key: "dRLTehNfbGBJfkh4gbBJtG8h8CmGYyNP"
   base:
     url: "https://api-singapore.klingai.com"
