@@ -38,7 +38,7 @@ outbound:
 
 api:
   access:
-    key: "AKGhfMMmYBg3F3hYdEPDGQyALhRDbemL
+    key: "AKGhfMMmYBg3F3hYdEPDGQyALhRDbemL"
   secret:
     key: "dRLTehNfbGBJfkh4gbBJtG8h8CmGYyNP"
   base:
