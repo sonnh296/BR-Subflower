@@ -1,8 +1,9 @@
 package com.hls.sunflower.mapper;
 
+import org.mapstruct.Mapper;
+
 import com.hls.sunflower.dto.response.RoleResponse;
 import com.hls.sunflower.entity.Role;
-import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface RoleMapper {

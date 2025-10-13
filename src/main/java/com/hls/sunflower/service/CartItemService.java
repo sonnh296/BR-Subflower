@@ -1,4 +1,3 @@
 package com.hls.sunflower.service;
 
-public interface CartItemService {
-}
+public interface CartItemService {}

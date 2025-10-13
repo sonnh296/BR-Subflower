@@ -1,11 +1,12 @@
 package com.hls.sunflower.entity;
 
+import java.util.Set;
+
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.*;
 
-import java.util.Set;
+import lombok.*;
 
 @Getter
 @Setter
@@ -23,7 +24,10 @@ public class Product {
 
     private String description;
 
-    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "product",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
+            orphanRemoval = true)
     @JsonIgnore
     private Set<ProductItem> productItem;
 }

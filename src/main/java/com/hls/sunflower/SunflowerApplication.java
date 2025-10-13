@@ -8,8 +8,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 public class SunflowerApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(SunflowerApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(SunflowerApplication.class, args);
+    }
 }

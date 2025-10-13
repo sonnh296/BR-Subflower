@@ -1,10 +1,12 @@
 package com.hls.sunflower.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.Set;
+
+import jakarta.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -36,7 +38,9 @@ public class Users {
     @Column
     private Boolean oAuth2;
 
-    @OneToMany(mappedBy = "user",cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @OneToMany(
+            mappedBy = "user",
+            cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JsonIgnore
     private Set<UserRole> user_roles;
 
@@ -46,7 +50,7 @@ public class Users {
 
     @PrePersist
     public void onCreate() {
-        if(oAuth2 == null) {
+        if (oAuth2 == null) {
             oAuth2 = false;
         }
     }

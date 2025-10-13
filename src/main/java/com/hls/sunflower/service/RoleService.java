@@ -1,9 +1,8 @@
 package com.hls.sunflower.service;
 
+import java.util.List;
 
 import com.hls.sunflower.dto.response.RoleResponse;
-
-import java.util.List;
 
 public interface RoleService {
     public List<RoleResponse> getRoles();

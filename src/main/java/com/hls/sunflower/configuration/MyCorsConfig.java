@@ -15,6 +15,8 @@ public class MyCorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // Cho phép các domain cụ thể
+        config.addAllowedOrigin("https://elsun.site");
+        config.addAllowedOrigin("https://elsun.vn");
         config.addAllowedOrigin("http://localhost:5173");
 
         // Hoặc cho phép tất cả các domain (không khuyến khích trong môi trường sản xuất)

@@ -1,8 +1,9 @@
 package com.hls.sunflower.configuration;
 
-import com.nimbusds.jose.JOSEException;
-import com.hls.sunflower.dto.request.IntrospectRequest;
-import com.hls.sunflower.service.AuthenticationService;
+import java.text.ParseException;
+import java.util.Objects;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -12,9 +13,9 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.text.ParseException;
-import java.util.Objects;
+import com.hls.sunflower.dto.request.IntrospectRequest;
+import com.hls.sunflower.service.AuthenticationService;
+import com.nimbusds.jose.JOSEException;
 
 @Component
 public class CustomJwtDecoder implements JwtDecoder {
@@ -27,17 +28,17 @@ public class CustomJwtDecoder implements JwtDecoder {
     private NimbusJwtDecoder nimbusJwtDecoder = null;
 
     @Override
-    public Jwt decode(String token){
+    public Jwt decode(String token) {
 
         try {
-            //check hieu luc cua token
+            // check hieu luc cua token
             authenticationService.introspect(
                     IntrospectRequest.builder().token(token).build());
         } catch (JOSEException | ParseException e) {
             throw new JwtException(e.getMessage());
         }
 
-        //cung cap signerKey va algorithm
+        // cung cap signerKey va algorithm
         if (Objects.isNull(nimbusJwtDecoder)) {
             SecretKeySpec secretKeySpec = new SecretKeySpec(signerKey.getBytes(), "HS512");
             nimbusJwtDecoder = NimbusJwtDecoder.withSecretKey(secretKeySpec)

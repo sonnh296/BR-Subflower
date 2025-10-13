@@ -1,17 +1,15 @@
 package com.hls.sunflower.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.*;
+
 import com.hls.sunflower.dto.request.ProductRequest;
 import com.hls.sunflower.dto.response.ApiResponse;
 import com.hls.sunflower.dto.response.ProductResponse;
 import com.hls.sunflower.service.ProductService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/products")
@@ -33,8 +31,7 @@ public class ProductController {
             @RequestParam(name = "field", required = false, defaultValue = "id") String field,
             @RequestParam(name = "pageNumber", required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(name = "pageSize", required = false, defaultValue = "5") Integer pageSize,
-            @RequestParam(name = "sort", required = false, defaultValue = "ASC") String sort
-    ) {
+            @RequestParam(name = "sort", required = false, defaultValue = "ASC") String sort) {
         return ApiResponse.<Page<ProductResponse>>builder()
                 .result(productService.getProducts(field, pageNumber, pageSize, sort))
                 .build();
@@ -48,7 +45,8 @@ public class ProductController {
     }
 
     @PutMapping("/{productId}")
-    public ApiResponse<ProductResponse> updateProduct(@PathVariable String productId, @RequestBody ProductRequest request) {
+    public ApiResponse<ProductResponse> updateProduct(
+            @PathVariable String productId, @RequestBody ProductRequest request) {
         return ApiResponse.<ProductResponse>builder()
                 .result(productService.updateProduct(productId, request))
                 .build();
@@ -57,8 +55,6 @@ public class ProductController {
     @RequestMapping(value = "/{productId}", method = RequestMethod.DELETE)
     public ApiResponse<String> deleteProduct(@PathVariable String productId) {
         productService.deleteProduct(productId);
-        return ApiResponse.<String>builder()
-                .result("Product has been deleted")
-                .build();
+        return ApiResponse.<String>builder().result("Product has been deleted").build();
     }
 }
