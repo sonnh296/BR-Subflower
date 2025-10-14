@@ -46,23 +46,28 @@ public class GenerateAIImage {
             // Generate JWT token
             String token = generateToken(accessKey, secretKey);
 
-            // Convert human image to Base64
+            // Convert human image to Base64 (clean base64 without data URI prefix)
             String humanImageBase64 = Base64.getEncoder().encodeToString(humanImage.getBytes());
 
-            // For cloth image, we need to either upload it somewhere to get a URL
-            // or convert it to Base64 as well based on API requirements
-            // For this example, we'll convert cloth image to Base64 too
+            // Clean cloth image base64 (remove data URI prefix if present)
+            String clothImageBase64 = cleanBase64String(clothImage);
 
             // Create request body
-            String requestBody = createRequestBody(humanImageBase64, clothImage);
+            String requestBody = createRequestBody(humanImageBase64, clothImageBase64);
+
+            System.out.println("Submitting task with request body length: " + requestBody.length());
 
             // Submit the task
             JSONObject submitResponse = submitVirtualTryOnTask(token, requestBody);
 
             // Check if task submission was successful
             if (submitResponse.getInt("code") != 0) {
+                String errorMessage = submitResponse.has("message")
+                    ? submitResponse.getString("message")
+                    : "Unknown error";
+                System.err.println("Error submitting task: " + errorMessage);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Error submitting task: " + submitResponse.getString("message"));
+                        .body("Error submitting task: " + errorMessage);
             }
 
             // Extract task_id
@@ -113,6 +118,24 @@ public class GenerateAIImage {
         }
     }
 
+    /**
+     * Clean base64 string by removing data URI prefix if present
+     * e.g., "data:image/png;base64,iVBORw0KG..." -> "iVBORw0KG..."
+     */
+    private String cleanBase64String(String base64String) {
+        if (base64String == null || base64String.isEmpty()) {
+            return base64String;
+        }
+
+        // Remove data URI prefix if present
+        if (base64String.contains(",")) {
+            int commaIndex = base64String.indexOf(",");
+            return base64String.substring(commaIndex + 1);
+        }
+
+        return base64String;
+    }
+
     private String generateToken(String ak, String sk) {
         try {
             Date expiredAt =
@@ -134,32 +157,42 @@ public class GenerateAIImage {
     }
 
     private String createRequestBody(String humanImageBase64, String clothImageBase64) {
-        // Note: Adjust this method if the API requires cloth_image as URL instead of Base64
-        return String.format(
-                "{\"human_image\":\"%s\",\"human_image\":\"%s\",\"cloth_image\":\"%s\"}",
-                "kolors-virtual-try-on-v1-5", humanImageBase64, clothImageBase64);
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("model_name", "kolors-virtual-try-on-v1-5");
+        requestBody.put("human_image", humanImageBase64);
+        requestBody.put("cloth_image", clothImageBase64);
+
+        return requestBody.toString();
     }
 
     private JSONObject submitVirtualTryOnTask(String token, String requestBody) throws Exception {
         URL url = new URL(apiBaseUrl + SUBMIT_ENDPOINT);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-        // Set up HTTP request
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + token);
-        connection.setDoOutput(true);
+        try {
+            // Set up HTTP request
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Authorization", "Bearer " + token);
+            connection.setDoOutput(true);
 
-        // Send request
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = requestBody.getBytes("utf-8");
-            os.write(input, 0, input.length);
+            // Send request
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = requestBody.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+
+            // Get response
+            String response = readResponse(connection);
+            System.out.println("Response: " + response);
+            return new JSONObject(response);
+        } catch (Exception e) {
+            System.err.println("Error in submitVirtualTryOnTask: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        } finally {
+            connection.disconnect();
         }
-
-        // Get response
-        String response = readResponse(connection);
-        System.out.println("Response: " + response);
-        return new JSONObject(response);
     }
 
     private JSONObject getTaskStatus(String token, String taskId) throws Exception {

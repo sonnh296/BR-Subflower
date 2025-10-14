@@ -1,10 +1,14 @@
 package com.hls.sunflower.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.hls.sunflower.dto.request.ProductRequest;
 import com.hls.sunflower.dto.response.ApiResponse;
+import com.hls.sunflower.dto.response.ProductListResponse;
 import com.hls.sunflower.dto.response.ProductResponse;
 import com.hls.sunflower.service.ProductService;
 
@@ -27,12 +31,12 @@ public class ProductController {
     }
 
     @GetMapping("")
-    public ApiResponse<Page<ProductResponse>> getProducts(
+    public ApiResponse<Page<ProductListResponse>> getProducts(
             @RequestParam(name = "field", required = false, defaultValue = "id") String field,
             @RequestParam(name = "pageNumber", required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(name = "pageSize", required = false, defaultValue = "5") Integer pageSize,
             @RequestParam(name = "sort", required = false, defaultValue = "ASC") String sort) {
-        return ApiResponse.<Page<ProductResponse>>builder()
+        return ApiResponse.<Page<ProductListResponse>>builder()
                 .result(productService.getProducts(field, pageNumber, pageSize, sort))
                 .build();
     }
@@ -56,5 +60,29 @@ public class ProductController {
     public ApiResponse<String> deleteProduct(@PathVariable String productId) {
         productService.deleteProduct(productId);
         return ApiResponse.<String>builder().result("Product has been deleted").build();
+    }
+
+    @PostMapping("/{productId}/images")
+    public ApiResponse<ProductResponse> uploadProductImages(
+            @PathVariable String productId, @RequestParam("images") List<MultipartFile> images) {
+        return ApiResponse.<ProductResponse>builder()
+                .result(productService.uploadProductImages(productId, images))
+                .build();
+    }
+
+    @PostMapping("/{productId}/images/single")
+    public ApiResponse<ProductResponse> addProductImage(
+            @PathVariable String productId, @RequestParam("image") MultipartFile image) {
+        return ApiResponse.<ProductResponse>builder()
+                .result(productService.addProductImage(productId, image))
+                .build();
+    }
+
+    @DeleteMapping("/{productId}/images/{imageId}")
+    public ApiResponse<ProductResponse> removeProductImage(
+            @PathVariable String productId, @PathVariable String imageId) {
+        return ApiResponse.<ProductResponse>builder()
+                .result(productService.removeProductImage(productId, imageId))
+                .build();
     }
 }

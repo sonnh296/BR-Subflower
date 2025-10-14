@@ -1,5 +1,6 @@
 package com.hls.sunflower.service.serviceImpl;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -9,17 +10,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.hls.sunflower.dao.ProductItemRepository;
 import com.hls.sunflower.dao.ProductRepository;
 import com.hls.sunflower.dto.request.ProductRequest;
+import com.hls.sunflower.dto.response.ProductListResponse;
 import com.hls.sunflower.dto.response.ProductResponse;
 import com.hls.sunflower.entity.Product;
+import com.hls.sunflower.entity.ProductImage;
 import com.hls.sunflower.entity.ProductItem;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
 import com.hls.sunflower.mapper.ProductItemMapper;
 import com.hls.sunflower.mapper.ProductMapper;
+import com.hls.sunflower.service.AzureBlobStorageService;
 import com.hls.sunflower.service.ProductService;
 
 import lombok.RequiredArgsConstructor;
@@ -31,9 +36,10 @@ public class ProductServiceImpl implements ProductService {
     private final ProductItemRepository productItemRepository;
     private final ProductMapper productMapper;
     private final ProductItemMapper productItemMapper;
+    private final AzureBlobStorageService azureBlobStorageService;
 
     @Override
-    public Page<ProductResponse> getProducts(String field, Integer pageNumber, Integer pageSize, String sort) {
+    public Page<ProductListResponse> getProducts(String field, Integer pageNumber, Integer pageSize, String sort) {
         Specification<Product> specs = Specification.where(null);
 
         Sort sortable = sort.equalsIgnoreCase("ASC")
@@ -41,7 +47,7 @@ public class ProductServiceImpl implements ProductService {
                 : Sort.by(field).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sortable);
 
-        return productRepository.findAll(specs, pageable).map(productMapper::toProductResponse);
+        return productRepository.findAll(specs, pageable).map(productMapper::toProductListResponse);
     }
 
     @Override
@@ -55,6 +61,16 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse addProduct(ProductRequest request) {
         Product product = productMapper.toProduct(request);
 
+        // Handle product images
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            request.getImageUrls().forEach(url -> {
+                ProductImage image =
+                        ProductImage.builder().imageUrl(url).product(product).build();
+                product.getProductImages().add(image);
+            });
+        }
+
+        // Handle product items
         Set<ProductItem> productItemSet = request.getProductItem().stream()
                 .map(productItemRequest -> {
                     ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
@@ -63,6 +79,7 @@ public class ProductServiceImpl implements ProductService {
                 })
                 .collect(Collectors.toSet());
         product.setProductItem(productItemSet);
+
         return productMapper.toProductResponse(productRepository.save(product));
     }
 
@@ -73,8 +90,18 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
         productMapper.updateProductFromRequest(request, product);
 
-        product.getProductItem().clear();
+        // Update product images
+        product.getProductImages().clear();
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            request.getImageUrls().forEach(url -> {
+                ProductImage image =
+                        ProductImage.builder().imageUrl(url).product(product).build();
+                product.getProductImages().add(image);
+            });
+        }
 
+        // Update product items
+        product.getProductItem().clear();
         request.getProductItem().stream().forEach(productItemRequest -> {
             ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
             productItem.setProduct(product);
@@ -87,5 +114,71 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProduct(String productId) {
         productRepository.deleteById(productId);
+    }
+
+    @Override
+    public ProductResponse uploadProductImages(String productId, List<MultipartFile> images) {
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+        // Upload images to Azure Blob Storage and get URLs
+        List<String> imageUrls = azureBlobStorageService.uploadProductImages(images, productId);
+
+        // Create ProductImage entities and add them to the product
+        imageUrls.forEach(url -> {
+            ProductImage productImage =
+                    ProductImage.builder().imageUrl(url).product(product).build();
+            product.getProductImages().add(productImage);
+        });
+
+        Product savedProduct = productRepository.save(product);
+        return productMapper.toProductResponse(savedProduct);
+    }
+
+    @Override
+    public ProductResponse addProductImage(String productId, MultipartFile image) {
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+        // Upload single image to Azure Blob Storage
+        String imageUrl = azureBlobStorageService.uploadProductImage(image, productId);
+
+        // Create ProductImage entity and add it to the product
+        ProductImage productImage =
+                ProductImage.builder().imageUrl(imageUrl).product(product).build();
+        product.getProductImages().add(productImage);
+
+        Product savedProduct = productRepository.save(product);
+        return productMapper.toProductResponse(savedProduct);
+    }
+
+    @Override
+    public ProductResponse removeProductImage(String productId, String imageId) {
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+        // Find the image to delete from Azure
+        ProductImage imageToRemove = product.getProductImages().stream()
+                .filter(img -> img.getId().equals(imageId))
+                .findFirst()
+                .orElse(null);
+
+        if (imageToRemove != null) {
+            // Delete from Azure Blob Storage
+            try {
+                azureBlobStorageService.deleteFile(imageToRemove.getImageUrl());
+            } catch (Exception e) {
+                // Log error but continue to remove from database
+            }
+
+            // Remove from product
+            product.getProductImages().remove(imageToRemove);
+        }
+
+        Product savedProduct = productRepository.save(product);
+        return productMapper.toProductResponse(savedProduct);
     }
 }

@@ -1,6 +1,5 @@
 package com.hls.sunflower.dto.response;
 
-import java.util.List;
 import java.util.Set;
 
 import com.hls.sunflower.dto.request.ProductItemRequest;
@@ -14,14 +13,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductResponse {
+public class ProductListResponse {
     private String id;
 
     private String name;
 
     private String description;
 
-    private List<String> imageUrls;
+    private String thumbnailUrl; // Only one image for list view
 
     private Set<ProductItemRequest> productItem;
 }

@@ -1,5 +1,7 @@
 package com.hls.sunflower.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import jakarta.persistence.*;
@@ -22,7 +24,12 @@ public class Product {
 
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ProductImage> productImages = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "product",
@@ -30,4 +37,15 @@ public class Product {
             orphanRemoval = true)
     @JsonIgnore
     private Set<ProductItem> productItem;
+
+    // Helper methods to manage bidirectional relationship
+    public void addProductImage(ProductImage image) {
+        productImages.add(image);
+        image.setProduct(this);
+    }
+
+    public void removeProductImage(ProductImage image) {
+        productImages.remove(image);
+        image.setProduct(null);
+    }
 }
