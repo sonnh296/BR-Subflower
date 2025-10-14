@@ -2,27 +2,32 @@ server:
   port: 8080
   servlet:
     context-path: /api
+  tomcat:
+    max-swallow-size: 100MB
+    max-http-form-post-size: 100MB
 
 #db configuration
 spring:
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 100MB
+      max-request-size: 100MB
   datasource:
-    url: "jdbc:mysql://localhost:3306/sunflower"
+    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/sunflower}
     driver-class-name: "com.mysql.cj.jdbc.Driver"
-    username: root
-    password: root
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:root}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-
-
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
 
 jwt:
-  signerKey: "ZcCAeQKy0ly5bPdCVHM8bLQp5KJX9eczTqZl7zhjzK42U7SXfALZcWpSjitA5tLX"
+  signerKey: ${JWT_SIGNER_KEY:ZcCAeQKy0ly5bPdCVHM8bLQp5KJX9eczTqZl7zhjzK42U7SXfALZcWpSjitA5tLX}
   valid-duration: 36000 # in second .
   refreshable-duration: 360000 # in seconds .
 
@@ -32,3 +37,22 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /api-docs
+
+outbound:
+  identity:
+    client-id: ${GOOGLE_CLIENT_ID:your_google_client_id}
+    client-secret: ${GOOGLE_CLIENT_SECRET:your_google_client_secret}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:5173/auth/sign-in}
+
+api:
+  access:
+    key: ${API_ACCESS_KEY:your_api_access_key}
+  secret:
+    key: ${API_SECRET_KEY:your_api_secret_key}
+  base:
+    url: "https://api.klingai.com"
+
+azure:
+  storage:
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:DefaultEndpointsProtocol=https;AccountName=your_account;AccountKey=your_key;EndpointSuffix=core.windows.net}
+    container-name: ${AZURE_STORAGE_CONTAINER_NAME:your_container}
