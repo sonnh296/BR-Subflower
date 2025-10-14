@@ -62,12 +62,10 @@ public class GenerateAIImage {
 
             // Check if task submission was successful
             if (submitResponse.getInt("code") != 0) {
-                String errorMessage = submitResponse.has("message")
-                    ? submitResponse.getString("message")
-                    : "Unknown error";
+                String errorMessage =
+                        submitResponse.has("message") ? submitResponse.getString("message") : "Unknown error";
                 System.err.println("Error submitting task: " + errorMessage);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Error submitting task: " + errorMessage);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error submitting task: " + errorMessage);
             }
 
             // Extract task_id
