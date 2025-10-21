@@ -29,7 +29,8 @@ public class SecurityConfiguration {
         "/auth/logout",
         "/auth/refresh",
         "/api/virtual-try-on",
-        "/cloudinary/upload/image"
+        "/cloudinary/upload/image",
+        "/api/fashion-advisor/**"
     };
 
     @Autowired
