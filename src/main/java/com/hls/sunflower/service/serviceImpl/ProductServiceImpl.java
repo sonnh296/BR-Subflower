@@ -71,14 +71,16 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // Handle product items
-        Set<ProductItem> productItemSet = request.getProductItem().stream()
-                .map(productItemRequest -> {
-                    ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
-                    productItem.setProduct(product);
-                    return productItem;
-                })
-                .collect(Collectors.toSet());
-        product.setProductItem(productItemSet);
+        if (request.getProductItem() != null && !request.getProductItem().isEmpty()) {
+            Set<ProductItem> productItemSet = request.getProductItem().stream()
+                    .map(productItemRequest -> {
+                        ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
+                        productItem.setProduct(product);
+                        return productItem;
+                    })
+                    .collect(Collectors.toSet());
+            product.setProductItem(productItemSet);
+        }
 
         return productMapper.toProductResponse(productRepository.save(product));
     }
@@ -102,11 +104,13 @@ public class ProductServiceImpl implements ProductService {
 
         // Update product items
         product.getProductItem().clear();
-        request.getProductItem().stream().forEach(productItemRequest -> {
-            ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
-            productItem.setProduct(product);
-            product.getProductItem().add(productItem);
-        });
+        if (request.getProductItem() != null && !request.getProductItem().isEmpty()) {
+            request.getProductItem().stream().forEach(productItemRequest -> {
+                ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
+                productItem.setProduct(product);
+                product.getProductItem().add(productItem);
+            });
+        }
 
         return productMapper.toProductResponse(productRepository.save(product));
     }
