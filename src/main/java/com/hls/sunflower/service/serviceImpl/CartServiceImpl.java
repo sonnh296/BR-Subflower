@@ -58,20 +58,21 @@ public class CartServiceImpl implements CartService {
 
         if (product != null) {
             price = product.getPrice();
-                    + (product.getProductImages() != null
             if (product.getProductImages() != null
                     && !product.getProductImages().isEmpty()) {
-                            : "null"));
                 thumbnailUrl = product.getProductImages().get(0).getImageUrl();
+            } else {
                 System.out.println("DEBUG: No images found, using default /noavatar.png");
             }
-        return CartItemResponse.builder()
+        } else {
             System.out.println("DEBUG: Product is null! Cart item has no associated product!");
         }
 
         CartItemResponse response = CartItemResponse.builder()
                 .id(cartItem.getId())
                 .quantity(cartItem.getQuantity())
+                .thumbnailUrl(thumbnailUrl)
+                .price(price)
                 .build();
 
         System.out.println("DEBUG: Final response - thumbnailUrl: " + response.getThumbnailUrl() + ", price: "

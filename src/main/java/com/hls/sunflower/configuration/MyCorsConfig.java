@@ -18,6 +18,7 @@ public class MyCorsConfig {
         config.addAllowedOrigin("https://elsun.site");
         config.addAllowedOrigin("https://elsun.vn");
         config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("https://purple-field-00d103000.3.azurestaticapps.net");
 
         // Hoặc cho phép tất cả các domain (không khuyến khích trong môi trường sản xuất)
         // config.addAllowedOrigin("*");
