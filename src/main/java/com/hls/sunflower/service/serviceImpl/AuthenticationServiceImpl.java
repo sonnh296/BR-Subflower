@@ -25,6 +25,7 @@ import com.hls.sunflower.entity.Users;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
 import com.hls.sunflower.service.AuthenticationService;
+import com.hls.sunflower.service.UserService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -43,6 +44,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final OutboundIdentityClient outboundIdentityClient;
     private final OutBoundUserClient outBoundUserClient;
+    private final UserService userService;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -78,6 +80,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             PasswordEncoder passwordEncoder,
             OutboundIdentityClient outboundIdentityClient,
             OutBoundUserClient outBoundUserClient,
+            UserService userService,
             RestTemplate restTemplate) {
         this.usersRepository = usersRepository;
         this.roleRepository = roleRepository;
@@ -85,6 +88,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.passwordEncoder = passwordEncoder;
         this.outboundIdentityClient = outboundIdentityClient;
         this.outBoundUserClient = outBoundUserClient;
+        this.userService = userService;
     }
 
     @Override
@@ -225,6 +229,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var user =
                 usersRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
+        var token = generateToken(user);
+
+        return AuthenticationResponse.builder().token(token).authenticated(true).build();
+    }
+
+    @Override
+    public AuthenticationResponse register(UserCreationRequest request) {
+        // Create the user
+        userService.addUser(request);
+
+        // Retrieve the created user
+        var user = usersRepository
+                .findByUsername(request.getUsername())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        // Generate token
         var token = generateToken(user);
 
         return AuthenticationResponse.builder().token(token).authenticated(true).build();

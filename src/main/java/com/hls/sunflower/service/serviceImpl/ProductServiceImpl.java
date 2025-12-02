@@ -1,8 +1,6 @@
 package com.hls.sunflower.service.serviceImpl;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,17 +10,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.hls.sunflower.dao.ProductItemRepository;
 import com.hls.sunflower.dao.ProductRepository;
 import com.hls.sunflower.dto.request.ProductRequest;
 import com.hls.sunflower.dto.response.ProductListResponse;
 import com.hls.sunflower.dto.response.ProductResponse;
 import com.hls.sunflower.entity.Product;
 import com.hls.sunflower.entity.ProductImage;
-import com.hls.sunflower.entity.ProductItem;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
-import com.hls.sunflower.mapper.ProductItemMapper;
 import com.hls.sunflower.mapper.ProductMapper;
 import com.hls.sunflower.service.AzureBlobStorageService;
 import com.hls.sunflower.service.ProductService;
@@ -33,9 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
-    private final ProductItemRepository productItemRepository;
     private final ProductMapper productMapper;
-    private final ProductItemMapper productItemMapper;
     private final AzureBlobStorageService azureBlobStorageService;
 
     @Override
@@ -70,18 +63,6 @@ public class ProductServiceImpl implements ProductService {
             });
         }
 
-        // Handle product items
-        if (request.getProductItem() != null && !request.getProductItem().isEmpty()) {
-            Set<ProductItem> productItemSet = request.getProductItem().stream()
-                    .map(productItemRequest -> {
-                        ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
-                        productItem.setProduct(product);
-                        return productItem;
-                    })
-                    .collect(Collectors.toSet());
-            product.setProductItem(productItemSet);
-        }
-
         return productMapper.toProductResponse(productRepository.save(product));
     }
 
@@ -99,16 +80,6 @@ public class ProductServiceImpl implements ProductService {
                 ProductImage image =
                         ProductImage.builder().imageUrl(url).product(product).build();
                 product.getProductImages().add(image);
-            });
-        }
-
-        // Update product items
-        product.getProductItem().clear();
-        if (request.getProductItem() != null && !request.getProductItem().isEmpty()) {
-            request.getProductItem().stream().forEach(productItemRequest -> {
-                ProductItem productItem = productItemMapper.toProductItem(productItemRequest);
-                productItem.setProduct(product);
-                product.getProductItem().add(productItem);
             });
         }
 

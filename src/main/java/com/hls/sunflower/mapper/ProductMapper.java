@@ -17,7 +17,6 @@ import com.hls.sunflower.entity.ProductImage;
 
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
-    @Mapping(target = "productItem", ignore = true)
     @Mapping(target = "productImages", ignore = true)
     Product toProduct(ProductRequest request);
 
@@ -27,7 +26,6 @@ public interface ProductMapper {
     @Mapping(source = "productImages", target = "thumbnailUrl", qualifiedByName = "mapFirstImageToUrl")
     ProductListResponse toProductListResponse(Product product);
 
-    @Mapping(target = "productItem", ignore = true)
     @Mapping(target = "productImages", ignore = true)
     void updateProductFromRequest(ProductRequest request, @MappingTarget Product product);
 

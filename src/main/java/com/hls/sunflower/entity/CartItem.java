@@ -4,8 +4,6 @@ import java.sql.Timestamp;
 
 import jakarta.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import lombok.*;
 
 @Getter
@@ -15,6 +13,9 @@ import lombok.*;
 @Entity
 @Builder
 @Table(name = "cart_item")
+@Data
+@EqualsAndHashCode(exclude = {"cart", "product"})
+@ToString(exclude = {"cart", "product"})
 public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -24,10 +25,9 @@ public class CartItem {
 
     private Timestamp addedAt;
 
-    @OneToOne
-    @JoinColumn(name = "product_item_id")
-    @JsonIgnore
-    private ProductItem productItem;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     @ManyToOne
     @JoinColumn(name = "cart_id")

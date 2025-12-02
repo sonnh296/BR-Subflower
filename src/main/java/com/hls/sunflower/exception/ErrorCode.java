@@ -19,8 +19,11 @@ public enum ErrorCode {
     PRODUCT_ITEM_NOT_EXISTED(2002, "Product item not existed", HttpStatus.NOT_FOUND),
     CART_NOT_EXISTED(3001, "Cart not existed", HttpStatus.NOT_FOUND),
     CART_ITEM_NOT_EXISTED(4001, "Cart item not existed", HttpStatus.NOT_FOUND),
-    PRODUCT_OUT_OF_STOCK(4001, "larger quantity than stock product", HttpStatus.BAD_REQUEST),
-    ;
+    PRODUCT_OUT_OF_STOCK(4002, "larger quantity than stock product", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_EXISTED(5001, "Order not existed", HttpStatus.NOT_FOUND),
+    CART_IS_EMPTY(5002, "Cart is empty", HttpStatus.BAD_REQUEST),
+    ORDER_CANNOT_BE_CANCELLED(5003, "Order cannot be cancelled", HttpStatus.BAD_REQUEST),
+    INVALID_ORDER_STATUS_TRANSITION(5004, "Invalid order status transition", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

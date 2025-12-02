@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AzureBlobStorageConfig {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AzureBlobStorageConfig.class);
+
     @Value("${azure.storage.connection-string}")
     private String connectionString;
 

@@ -13,6 +13,7 @@ import lombok.*;
 @Entity
 @Builder
 @Table(name = "product_images")
+@Data
 public class ProductImage {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

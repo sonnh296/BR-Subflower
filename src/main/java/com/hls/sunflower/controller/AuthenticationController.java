@@ -9,6 +9,7 @@ import com.hls.sunflower.dto.request.AuthenticationRequest;
 import com.hls.sunflower.dto.request.IntrospectRequest;
 import com.hls.sunflower.dto.request.LogoutRequest;
 import com.hls.sunflower.dto.request.RefreshRequest;
+import com.hls.sunflower.dto.request.UserCreationRequest;
 import com.hls.sunflower.dto.response.ApiResponse;
 import com.hls.sunflower.dto.response.AuthenticationResponse;
 import com.hls.sunflower.dto.response.IntrospectResponse;
@@ -26,13 +27,17 @@ public class AuthenticationController {
     public ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
         var res = authenticationService.authenticate(request);
 
-        return ApiResponse.<AuthenticationResponse>builder().result(res).build();
+        ApiResponse<AuthenticationResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(res);
+        return apiResponse;
     }
 
     @PostMapping("/outbound/authentication")
     ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestParam("code") String code) {
         var result = authenticationService.outboundAuthenticate(code);
-        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
+        ApiResponse<AuthenticationResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(result);
+        return apiResponse;
     }
 
     @PostMapping("/introspect")
@@ -40,7 +45,9 @@ public class AuthenticationController {
             throws ParseException, JOSEException {
         var res = authenticationService.introspect(request);
 
-        return ApiResponse.<IntrospectResponse>builder().result(res).build();
+        ApiResponse<IntrospectResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(res);
+        return apiResponse;
     }
 
     @PostMapping("/refresh")
@@ -48,13 +55,24 @@ public class AuthenticationController {
             throws ParseException, JOSEException {
         var res = authenticationService.refreshToken(request);
 
-        return ApiResponse.<AuthenticationResponse>builder().result(res).build();
+        ApiResponse<AuthenticationResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(res);
+        return apiResponse;
     }
 
     @PostMapping("/logout")
     public ApiResponse<Void> authenticate(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
         authenticationService.logout(request);
 
-        return ApiResponse.<Void>builder().build();
+        return new ApiResponse<>();
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<AuthenticationResponse> register(@RequestBody UserCreationRequest request) {
+        var res = authenticationService.register(request);
+
+        ApiResponse<AuthenticationResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(res);
+        return apiResponse;
     }
 }

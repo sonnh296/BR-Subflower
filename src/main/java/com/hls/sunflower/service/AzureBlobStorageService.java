@@ -13,12 +13,12 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AzureBlobStorageService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AzureBlobStorageService.class);
 
     private final BlobContainerClient blobContainerClient;
 

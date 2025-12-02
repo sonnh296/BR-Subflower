@@ -11,20 +11,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProductItemResponse {
     private String id;
-
-    private double price;
-
-    private String category;
-
-    private String gender;
-
+    private String name;
+    private String description;
+    private Double price;
+    private Integer quantity;
     private String size;
-
-    private String color;
-
-    private int stockQuantity;
-
-    private boolean isActive;
-
-    private String url;
+    private String imageUrl;
 }

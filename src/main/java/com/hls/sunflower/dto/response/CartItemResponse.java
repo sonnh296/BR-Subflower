@@ -1,7 +1,5 @@
 package com.hls.sunflower.dto.response;
 
-import com.hls.sunflower.entity.ProductItem;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,5 +16,7 @@ public class CartItemResponse {
 
     private String addedAt;
 
-    private ProductItem productItem;
+    private String thumbnailUrl;
+
+    private Double price;
 }

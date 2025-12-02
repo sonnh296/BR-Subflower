@@ -1,6 +1,5 @@
 package com.hls.sunflower.service.serviceImpl;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -9,12 +8,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.hls.sunflower.dao.*;
-import com.hls.sunflower.dao.specification.CartItemSpecification;
 import com.hls.sunflower.dto.request.CartItemQuantityRequest;
 import com.hls.sunflower.dto.request.CartRequest;
 import com.hls.sunflower.dto.response.CartItemResponse;
@@ -22,7 +19,6 @@ import com.hls.sunflower.dto.response.CartResponse;
 import com.hls.sunflower.entity.*;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
-import com.hls.sunflower.mapper.CartItemMapper;
 import com.hls.sunflower.mapper.CartMapper;
 import com.hls.sunflower.service.CartService;
 
@@ -33,24 +29,54 @@ import lombok.RequiredArgsConstructor;
 public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final UsersRepository usersRepository;
-    private final ProductItemRepository productItemRepository;
     private final CartItemRepository cartItemRepository;
     private final CartMapper cartMapper;
-    private final CartItemMapper cartItemMapper;
+    private final ProductRepository productRepository;
 
     @Override
     public Page<CartItemResponse> getCartItems(String field, Integer pageNumber, Integer pageSize, String sort) {
-        Specification<CartItem> specs = Specification.where(null);
-
         Users user = getMyInfo();
-        specs = specs.and(CartItemSpecification.equalUserId(user.getId()));
 
         Sort sortable = sort.equalsIgnoreCase("ASC")
                 ? Sort.by(field).ascending()
                 : Sort.by(field).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sortable);
 
-        return cartItemRepository.findAll(specs, pageable).map(cartItemMapper::toCartItemResponse);
+        Page<CartItem> cartItems = cartItemRepository.findCartItemsWithProductAndImagesByUserId(user.getId(), pageable);
+
+        return cartItems.map(this::mapToCartItemResponse);
+    }
+
+    private CartItemResponse mapToCartItemResponse(CartItem cartItem) {
+        if (cartItem == null) {
+            return null;
+        }
+
+        Product product = cartItem.getProduct();
+        String thumbnailUrl = "/noavatar.png";
+        Double price = 0.0;
+
+        if (product != null) {
+            price = product.getPrice();
+                    + (product.getProductImages() != null
+            if (product.getProductImages() != null
+                    && !product.getProductImages().isEmpty()) {
+                            : "null"));
+                thumbnailUrl = product.getProductImages().get(0).getImageUrl();
+                System.out.println("DEBUG: No images found, using default /noavatar.png");
+            }
+        return CartItemResponse.builder()
+            System.out.println("DEBUG: Product is null! Cart item has no associated product!");
+        }
+
+        CartItemResponse response = CartItemResponse.builder()
+                .id(cartItem.getId())
+                .quantity(cartItem.getQuantity())
+                .build();
+
+        System.out.println("DEBUG: Final response - thumbnailUrl: " + response.getThumbnailUrl() + ", price: "
+                + response.getPrice());
+        return response;
     }
 
     @Override
@@ -58,9 +84,8 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.CART_NOT_EXISTED));
 
         CartResponse cartResponse = cartMapper.toCartResponse(cart);
-        Set<CartItemResponse> cartItemResponses = cart.getCartItems().stream()
-                .map(cartItemMapper::toCartItemResponse)
-                .collect(Collectors.toSet());
+        Set<CartItemResponse> cartItemResponses =
+                cart.getCartItems().stream().map(this::mapToCartItemResponse).collect(Collectors.toSet());
         cartResponse.setCartItems(cartItemResponses);
         return cartResponse;
     }
@@ -68,64 +93,44 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponse addCart(CartRequest request) {
         Users user = getMyInfo();
-        Optional<Cart> cartOptional = cartRepository.findByUserId(user.getId());
-        ProductItem productItem = productItemRepository
-                .findById(request.getCartItem().getProductItemId())
-                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_ITEM_NOT_EXISTED));
-        Cart cart = new Cart();
-        CartItem cartItem = new CartItem();
-        if (cartOptional.isEmpty()) {
-            cart.setUser(user);
-            if (request.getCartItem().getQuantity() > productItem.getStockQuantity()) {
-                throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
-            }
-            cartItem.setQuantity(request.getCartItem().getQuantity());
-            cartItem.setProductItem(productItem);
-            cartItem.setCart(cart);
+        Cart cart = cartRepository.findByUserId(user.getId()).orElseGet(() -> {
+            Cart newCart = new Cart();
+            newCart.setUser(user);
+            return cartRepository.save(newCart);
+        });
 
-            if (cart.getCartItems() == null) {
-                Set<CartItem> cartItems = new HashSet<>();
-                cartItems.add(cartItem);
-                cart.setCartItems(cartItems);
-            } else {
-                cart.getCartItems().add(cartItem);
-            }
-
-        } else {
-            cart = cartOptional.get();
-
-            // neu product item da duoc them truoc do thi tang quantity cua cart item
-            Optional<CartItem> cartItemOptional =
-                    cartItemRepository.findByCart_IdAndProductItem_Id(cart.getId(), productItem.getId());
-            if (cartItemOptional.isPresent()) {
-                cartItem = cartItemOptional.get();
-                int quantity = cartItem.getQuantity() + request.getCartItem().getQuantity();
-                if (quantity > productItem.getStockQuantity()) {
-                    throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
-                }
-                cartItem.setQuantity(quantity);
-
-                CartItem finalCartItem = cartItem;
-                cart.getCartItems().stream()
-                        .filter(item -> item.getId().equals(finalCartItem.getId()))
-                        .findFirst()
-                        .ifPresent(item -> item.setQuantity(finalCartItem.getQuantity()));
-            } else {
-                if (request.getCartItem().getQuantity() > productItem.getStockQuantity()) {
-                    throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
-                }
-                cartItem.setQuantity(request.getCartItem().getQuantity());
-                cartItem.setProductItem(productItem);
-                cartItem.setCart(cart);
-                cart.getCartItems().add(cartItem);
-            }
+        String productId = request.getCartItem().getProductId();
+        if (productId == null || productId.isEmpty()) {
+            throw new AppException(ErrorCode.PRODUCT_NOT_EXISTED);
         }
 
-        cartRepository.save(cart);
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+        Optional<CartItem> existingCartItem = cart.getCartItems().stream()
+                .filter(item -> item.getProduct().getId().equals(productId))
+                .findFirst();
+
+        if (existingCartItem.isPresent()) {
+            CartItem cartItem = existingCartItem.get();
+            cartItem.setQuantity(cartItem.getQuantity() + request.getCartItem().getQuantity());
+            cartItemRepository.save(cartItem);
+        } else {
+            CartItem newCartItem = new CartItem();
+            newCartItem.setCart(cart);
+            newCartItem.setProduct(product);
+            newCartItem.setQuantity(request.getCartItem().getQuantity());
+            cart.getCartItems().add(newCartItem);
+            cartItemRepository.save(newCartItem);
+        }
+
+        // Refresh cart entity to get the updated state
+        cart = cartRepository.findById(cart.getId()).orElseThrow(() -> new AppException(ErrorCode.CART_NOT_EXISTED));
+
         CartResponse cartResponse = cartMapper.toCartResponse(cart);
-        Set<CartItemResponse> cartItemResponses = cart.getCartItems().stream()
-                .map(cartItemMapper::toCartItemResponse)
-                .collect(Collectors.toSet());
+        Set<CartItemResponse> cartItemResponses =
+                cart.getCartItems().stream().map(this::mapToCartItemResponse).collect(Collectors.toSet());
         cartResponse.setCartItems(cartItemResponses);
         return cartResponse;
     }
@@ -133,16 +138,21 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartItemResponse updateCartItemQuantity(String cartItemId, CartItemQuantityRequest request) {
         CartItem cartItem = cartItemRepository
-                .findById(cartItemId)
+                .findCartItemWithProductAndImagesById(cartItemId)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_EXISTED));
-        ProductItem productItem = productItemRepository
-                .findById(cartItem.getProductItem().getId())
-                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
-        if (request.getQuantity() > productItem.getStockQuantity()) {
+        Product product = cartItem.getProduct();
+        if (request.getQuantity() > product.getQuantity()) {
             throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
         }
         cartItem.setQuantity(request.getQuantity());
-        return cartItemMapper.toCartItemResponse(cartItemRepository.save(cartItem));
+        CartItem updatedCartItem = cartItemRepository.save(cartItem);
+
+        // Reload with product and images to ensure complete data
+        updatedCartItem = cartItemRepository
+                .findCartItemWithProductAndImagesById(updatedCartItem.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_EXISTED));
+
+        return mapToCartItemResponse(updatedCartItem);
     }
 
     @Override

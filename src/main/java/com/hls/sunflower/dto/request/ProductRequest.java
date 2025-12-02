@@ -1,7 +1,6 @@
 package com.hls.sunflower.dto.request;
 
 import java.util.List;
-import java.util.Set;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +14,8 @@ import lombok.NoArgsConstructor;
 public class ProductRequest {
     private String name;
     private String description;
+    private Double price;
+    private Integer quantity;
+    private String size;
     private List<String> imageUrls;
-    private Set<ProductItemRequest> productItem;
 }

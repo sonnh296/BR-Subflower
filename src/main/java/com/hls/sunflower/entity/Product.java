@@ -2,11 +2,8 @@ package com.hls.sunflower.entity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import jakarta.persistence.*;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.*;
 
@@ -17,6 +14,9 @@ import lombok.*;
 @Entity
 @Builder
 @Table(name = "product")
+@Data
+@EqualsAndHashCode(exclude = {"productImages"})
+@ToString(exclude = {"productImages"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,16 +27,15 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Double price;
+
+    private Integer quantity;
+
+    private String size;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<ProductImage> productImages = new ArrayList<>();
-
-    @OneToMany(
-            mappedBy = "product",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
-            orphanRemoval = true)
-    @JsonIgnore
-    private Set<ProductItem> productItem;
 
     // Helper methods to manage bidirectional relationship
     public void addProductImage(ProductImage image) {

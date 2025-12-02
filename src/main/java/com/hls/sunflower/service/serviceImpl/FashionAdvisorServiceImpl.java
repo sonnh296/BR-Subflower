@@ -80,8 +80,8 @@ public class FashionAdvisorServiceImpl implements FashionAdvisorService {
     }
 
     private String callGeminiApi(String prompt) throws Exception {
-        String apiUrl = "https://generativelanguage.googleapis.com/v1/models/" + geminiModel
-                + ":generateContent?key=" + geminiApiKey;
+        String apiUrl = "https://generativelanguage.googleapis.com/v1/models/" + geminiModel + ":generateContent?key="
+                + geminiApiKey;
 
         URL url = new URL(apiUrl);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -242,28 +242,28 @@ public class FashionAdvisorServiceImpl implements FashionAdvisorService {
                 }
             }
 
-            return FashionAdvisorResponse.builder()
-                    .recommendation(json.optString("recommendation", aiResponse))
-                    .userCountry(country)
-                    .userLocation(location)
-                    .suggestedColors(suggestedColors)
-                    .suggestedStyles(suggestedStyles)
-                    .bodyType(json.optString("bodyType", ""))
-                    .additionalTips(json.optString("additionalTips", ""))
-                    .build();
+            FashionAdvisorResponse response = new FashionAdvisorResponse();
+            response.setRecommendation(json.optString("recommendation", aiResponse));
+            response.setUserCountry(country);
+            response.setUserLocation(location);
+            response.setSuggestedColors(suggestedColors);
+            response.setSuggestedStyles(suggestedStyles);
+            response.setBodyType(json.optString("bodyType", ""));
+            response.setAdditionalTips(json.optString("additionalTips", ""));
+            return response;
 
         } catch (Exception e) {
             log.error("Error parsing AI response, using raw response: ", e);
             // Fallback: return the raw AI response
-            return FashionAdvisorResponse.builder()
-                    .recommendation(aiResponse)
-                    .userCountry(country)
-                    .userLocation(location)
-                    .suggestedColors(new ArrayList<>())
-                    .suggestedStyles(new ArrayList<>())
-                    .bodyType("")
-                    .additionalTips("")
-                    .build();
+            FashionAdvisorResponse response = new FashionAdvisorResponse();
+            response.setRecommendation(aiResponse);
+            response.setUserCountry(country);
+            response.setUserLocation(location);
+            response.setSuggestedColors(new ArrayList<>());
+            response.setSuggestedStyles(new ArrayList<>());
+            response.setBodyType("");
+            response.setAdditionalTips("");
+            return response;
         }
     }
 
@@ -385,14 +385,14 @@ public class FashionAdvisorServiceImpl implements FashionAdvisorService {
     }
 
     private FashionAdvisorResponse createErrorResponse(String errorMessage, String location, String country) {
-        return FashionAdvisorResponse.builder()
-                .recommendation(errorMessage)
-                .userCountry(country)
-                .userLocation(location)
-                .suggestedColors(new ArrayList<>())
-                .suggestedStyles(new ArrayList<>())
-                .bodyType("")
-                .additionalTips("")
-                .build();
+        FashionAdvisorResponse response = new FashionAdvisorResponse();
+        response.setRecommendation(errorMessage);
+        response.setUserCountry(country);
+        response.setUserLocation(location);
+        response.setSuggestedColors(new ArrayList<>());
+        response.setSuggestedStyles(new ArrayList<>());
+        response.setBodyType("");
+        response.setAdditionalTips("");
+        return response;
     }
 }

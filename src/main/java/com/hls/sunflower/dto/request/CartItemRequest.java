@@ -13,4 +13,7 @@ public class CartItemRequest {
     private int quantity;
 
     private String productItemId;
+
+    // NEW: Allow adding products directly by product ID
+    private String productId;
 }
