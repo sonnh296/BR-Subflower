@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 public class ProductRequest {
     private String name;
     private String description;
-    private Double price;
-    private Integer quantity;
-    private String size;
     private List<String> imageUrls;
+    private List<ProductVariantRequest> variants;
+    private String availableFrom;
+    private String availableTo;
 }

@@ -11,11 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hls.sunflower.dao.ProductRepository;
+import com.hls.sunflower.dao.ProductVariantRepository;
 import com.hls.sunflower.dto.request.ProductRequest;
 import com.hls.sunflower.dto.response.ProductListResponse;
 import com.hls.sunflower.dto.response.ProductResponse;
 import com.hls.sunflower.entity.Product;
 import com.hls.sunflower.entity.ProductImage;
+import com.hls.sunflower.entity.ProductVariant;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
 import com.hls.sunflower.mapper.ProductMapper;
@@ -23,11 +25,14 @@ import com.hls.sunflower.service.AzureBlobStorageService;
 import com.hls.sunflower.service.ProductService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
     private final ProductMapper productMapper;
     private final AzureBlobStorageService azureBlobStorageService;
 
@@ -63,6 +68,26 @@ public class ProductServiceImpl implements ProductService {
             });
         }
 
+        // Handle product variants
+        if (request.getVariants() != null && !request.getVariants().isEmpty()) {
+            request.getVariants().forEach(variantRequest -> {
+                ProductVariant variant = ProductVariant.builder()
+                        .size(variantRequest.getSize())
+                        .price(variantRequest.getPrice())
+                        .stock(variantRequest.getStock())
+                        .product(product)
+                        .build();
+                product.getVariants().add(variant);
+            });
+        }
+
+        // Log mapped availability dates for debugging
+        log.debug(
+                "Mapped availableFrom={} availableTo={} for product={}",
+                product.getAvailableFrom(),
+                product.getAvailableTo(),
+                product.getName());
+
         return productMapper.toProductResponse(productRepository.save(product));
     }
 
@@ -71,16 +96,56 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository
                 .findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
         productMapper.updateProductFromRequest(request, product);
 
-        // Update product images
-        product.getProductImages().clear();
+        // Log mapped availability dates for debugging
+        log.debug(
+                "Updated mapping availableFrom={} availableTo={} for productId={}",
+                product.getAvailableFrom(),
+                product.getAvailableTo(),
+                productId);
+
+        // FIXED: Only update images if imageUrls are explicitly provided and not empty
+        // This prevents accidental deletion of images when updating other fields
         if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            product.getProductImages().clear();
             request.getImageUrls().forEach(url -> {
                 ProductImage image =
                         ProductImage.builder().imageUrl(url).product(product).build();
                 product.getProductImages().add(image);
             });
+            log.debug(
+                    "Updated {} images for productId={}", request.getImageUrls().size(), productId);
+        } else {
+            log.debug(
+                    "Keeping existing {} images for productId={}",
+                    product.getProductImages().size(),
+                    productId);
+        }
+
+        // FIXED: Only update variants if they are explicitly provided and not empty
+        // This prevents accidental deletion of variants when updating other fields
+        if (request.getVariants() != null && !request.getVariants().isEmpty()) {
+            product.getVariants().clear();
+            request.getVariants().forEach(variantRequest -> {
+                ProductVariant variant = ProductVariant.builder()
+                        .size(variantRequest.getSize())
+                        .price(variantRequest.getPrice())
+                        .stock(variantRequest.getStock())
+                        .product(product)
+                        .build();
+                product.getVariants().add(variant);
+            });
+            log.debug(
+                    "Updated {} variants for productId={}",
+                    request.getVariants().size(),
+                    productId);
+        } else {
+            log.debug(
+                    "Keeping existing {} variants for productId={}",
+                    product.getVariants().size(),
+                    productId);
         }
 
         return productMapper.toProductResponse(productRepository.save(product));

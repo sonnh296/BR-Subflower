@@ -23,7 +23,8 @@ public enum ErrorCode {
     ORDER_NOT_EXISTED(5001, "Order not existed", HttpStatus.NOT_FOUND),
     CART_IS_EMPTY(5002, "Cart is empty", HttpStatus.BAD_REQUEST),
     ORDER_CANNOT_BE_CANCELLED(5003, "Order cannot be cancelled", HttpStatus.BAD_REQUEST),
-    INVALID_ORDER_STATUS_TRANSITION(5004, "Invalid order status transition", HttpStatus.BAD_REQUEST);
+    INVALID_ORDER_STATUS_TRANSITION(5004, "Invalid order status transition", HttpStatus.BAD_REQUEST),
+    RESOURCE_NOT_FOUND(6001, "Resource not found", HttpStatus.NOT_FOUND);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

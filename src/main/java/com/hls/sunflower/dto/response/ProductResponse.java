@@ -15,8 +15,9 @@ public class ProductResponse {
     private String id;
     private String name;
     private String description;
-    private Double price;
-    private Integer quantity;
-    private String size;
     private List<String> imageUrls;
+    private List<ProductImageResponse> images; // NEW: Include image IDs
+    private List<ProductVariantResponse> variants;
+    private String availableFrom;
+    private String availableTo;
 }

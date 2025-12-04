@@ -24,6 +24,7 @@ import com.hls.sunflower.entity.Cart;
 import com.hls.sunflower.entity.CartItem;
 import com.hls.sunflower.entity.Order;
 import com.hls.sunflower.entity.OrderItem;
+import com.hls.sunflower.entity.ProductVariant;
 import com.hls.sunflower.entity.Users;
 import com.hls.sunflower.enums.OrderStatus;
 import com.hls.sunflower.exception.AppException;
@@ -68,14 +69,24 @@ public class OrderServiceImpl implements OrderService {
 
         // Calculate total price
         double totalPrice = cartItems.stream()
-                .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
+                .mapToDouble(item -> {
+                    ProductVariant variant = item.getProductVariant();
+                    if (variant != null) {
+                        return variant.getPrice() * item.getQuantity();
+                    } else {
+                        // Fallback for cart items without variants (backward compatibility)
+                        // You might want to handle this case differently based on your requirements
+                        throw new AppException(ErrorCode.PRODUCT_NOT_EXISTED);
+                    }
+                })
                 .sum();
 
         // Create order
         Order order = Order.builder()
                 .user(user)
                 .totalPrice(totalPrice)
-                .status(OrderStatus.PENDING)
+                // Since there is no online payment integrated, mark orders as PLACED when user creates them
+                .status(OrderStatus.PLACED)
                 .deliveryAddress(request.getDeliveryAddress())
                 .phoneNumber(request.getPhoneNumber())
                 .notes(request.getNotes())
@@ -84,11 +95,21 @@ public class OrderServiceImpl implements OrderService {
         // Create order items from cart items
         Set<OrderItem> orderItems = new HashSet<>();
         for (CartItem cartItem : cartItems) {
+            ProductVariant variant = cartItem.getProductVariant();
+            double priceAtOrder = 0.0;
+
+            if (variant != null) {
+                priceAtOrder = variant.getPrice();
+            } else {
+                // Fallback for cart items without variants (backward compatibility)
+                throw new AppException(ErrorCode.PRODUCT_NOT_EXISTED);
+            }
+
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(cartItem.getProduct())
                     .quantity(cartItem.getQuantity())
-                    .priceAtOrder(cartItem.getProduct().getPrice())
+                    .priceAtOrder(priceAtOrder)
                     .build();
             orderItems.add(orderItem);
         }
@@ -199,8 +220,8 @@ public class OrderServiceImpl implements OrderService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        // Can only cancel pending or confirmed orders
-        if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
+        // Can only cancel placed or confirmed orders
+        if (order.getStatus() != OrderStatus.PLACED && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new AppException(ErrorCode.ORDER_CANNOT_BE_CANCELLED);
         }
 

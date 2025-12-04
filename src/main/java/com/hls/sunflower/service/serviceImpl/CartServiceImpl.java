@@ -32,6 +32,7 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final CartMapper cartMapper;
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
 
     @Override
     public Page<CartItemResponse> getCartItems(String field, Integer pageNumber, Integer pageSize, String sort) {
@@ -53,31 +54,38 @@ public class CartServiceImpl implements CartService {
         }
 
         Product product = cartItem.getProduct();
+        ProductVariant variant = cartItem.getProductVariant();
         String thumbnailUrl = "/noavatar.png";
         Double price = 0.0;
+        String size = null;
+        Integer availableStock = 0;
+        String productName = "";
 
         if (product != null) {
-            price = product.getPrice();
+            productName = product.getName();
             if (product.getProductImages() != null
                     && !product.getProductImages().isEmpty()) {
                 thumbnailUrl = product.getProductImages().get(0).getImageUrl();
-            } else {
-                System.out.println("DEBUG: No images found, using default /noavatar.png");
             }
-        } else {
-            System.out.println("DEBUG: Product is null! Cart item has no associated product!");
         }
 
-        CartItemResponse response = CartItemResponse.builder()
+        if (variant != null) {
+            price = variant.getPrice();
+            size = variant.getSize();
+            availableStock = variant.getStock();
+        }
+
+        return CartItemResponse.builder()
                 .id(cartItem.getId())
                 .quantity(cartItem.getQuantity())
                 .thumbnailUrl(thumbnailUrl)
                 .price(price)
+                .productId(product != null ? product.getId() : null)
+                .productName(productName)
+                .variantId(variant != null ? variant.getId() : null)
+                .size(size)
+                .availableStock(availableStock)
                 .build();
-
-        System.out.println("DEBUG: Final response - thumbnailUrl: " + response.getThumbnailUrl() + ", price: "
-                + response.getPrice());
-        return response;
     }
 
     @Override
@@ -100,27 +108,65 @@ public class CartServiceImpl implements CartService {
             return cartRepository.save(newCart);
         });
 
+        // Support both product variant ID and product ID for backward compatibility
+        String productVariantId = request.getCartItem().getProductVariantId();
         String productId = request.getCartItem().getProductId();
-        if (productId == null || productId.isEmpty()) {
+
+        ProductVariant variant = null;
+        Product product = null;
+
+        if (productVariantId != null && !productVariantId.isEmpty()) {
+            // Add by specific variant (preferred method)
+            variant = productVariantRepository
+                    .findById(productVariantId)
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+            product = variant.getProduct();
+        } else if (productId != null && !productId.isEmpty()) {
+            // Add by product ID (for backward compatibility)
+            product = productRepository
+                    .findById(productId)
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+            // Use first variant if available
+            if (!product.getVariants().isEmpty()) {
+                variant = product.getVariants().get(0);
+            }
+        } else {
             throw new AppException(ErrorCode.PRODUCT_NOT_EXISTED);
         }
 
-        Product product = productRepository
-                .findById(productId)
-                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+        // Check stock availability
+        if (variant != null && request.getCartItem().getQuantity() > variant.getStock()) {
+            throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
+        }
 
+        // Create final copies for use in lambda expressions
+        final ProductVariant finalVariant = variant;
+        final Product finalProduct = product;
+
+        // Check if same variant already exists in cart
         Optional<CartItem> existingCartItem = cart.getCartItems().stream()
-                .filter(item -> item.getProduct().getId().equals(productId))
+                .filter(item -> finalVariant != null
+                        ? (item.getProductVariant() != null
+                                && item.getProductVariant().getId().equals(finalVariant.getId()))
+                        : item.getProduct().getId().equals(finalProduct.getId()))
                 .findFirst();
 
         if (existingCartItem.isPresent()) {
             CartItem cartItem = existingCartItem.get();
-            cartItem.setQuantity(cartItem.getQuantity() + request.getCartItem().getQuantity());
+            int newQuantity = cartItem.getQuantity() + request.getCartItem().getQuantity();
+
+            // Check stock for updated quantity
+            if (variant != null && newQuantity > variant.getStock()) {
+                throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
+            }
+
+            cartItem.setQuantity(newQuantity);
             cartItemRepository.save(cartItem);
         } else {
             CartItem newCartItem = new CartItem();
             newCartItem.setCart(cart);
             newCartItem.setProduct(product);
+            newCartItem.setProductVariant(variant);
             newCartItem.setQuantity(request.getCartItem().getQuantity());
             cart.getCartItems().add(newCartItem);
             cartItemRepository.save(newCartItem);
@@ -141,10 +187,17 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = cartItemRepository
                 .findCartItemWithProductAndImagesById(cartItemId)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_EXISTED));
-        Product product = cartItem.getProduct();
-        if (request.getQuantity() > product.getQuantity()) {
+
+        ProductVariant variant = cartItem.getProductVariant();
+
+        // Check stock availability against the variant stock
+        if (variant != null && request.getQuantity() > variant.getStock()) {
             throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
+        } else if (variant == null) {
+            // Fallback for cart items without variants (backward compatibility)
+            throw new AppException(ErrorCode.PRODUCT_NOT_EXISTED);
         }
+
         cartItem.setQuantity(request.getQuantity());
         CartItem updatedCartItem = cartItemRepository.save(cartItem);
 

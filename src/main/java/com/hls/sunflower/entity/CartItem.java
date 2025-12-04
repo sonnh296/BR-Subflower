@@ -14,8 +14,8 @@ import lombok.*;
 @Builder
 @Table(name = "cart_item")
 @Data
-@EqualsAndHashCode(exclude = {"cart", "product"})
-@ToString(exclude = {"cart", "product"})
+@EqualsAndHashCode(exclude = {"cart", "product", "productVariant"})
+@ToString(exclude = {"cart", "product", "productVariant"})
 public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,6 +28,10 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id")
     private Product product;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "product_variant_id")
+    private ProductVariant productVariant;
 
     @ManyToOne
     @JoinColumn(name = "cart_id")

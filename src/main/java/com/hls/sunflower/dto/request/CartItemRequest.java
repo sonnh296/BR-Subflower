@@ -14,6 +14,9 @@ public class CartItemRequest {
 
     private String productItemId;
 
-    // NEW: Allow adding products directly by product ID
+    // NEW: Allow adding products directly by product ID (deprecated)
     private String productId;
+
+    // NEW: Allow adding specific product variant
+    private String productVariantId;
 }

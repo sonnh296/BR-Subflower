@@ -24,6 +24,7 @@ public class ProductController {
 
     @PostMapping("")
     public ApiResponse<ProductResponse> createProduct(@RequestBody ProductRequest request) {
+        log.debug("Received createProduct request: {}", request);
 
         return ApiResponse.<ProductResponse>builder()
                 .result(productService.addProduct(request))
@@ -51,6 +52,7 @@ public class ProductController {
     @PutMapping("/{productId}")
     public ApiResponse<ProductResponse> updateProduct(
             @PathVariable String productId, @RequestBody ProductRequest request) {
+        log.debug("Received updateProduct request for id={} request={}", productId, request);
         return ApiResponse.<ProductResponse>builder()
                 .result(productService.updateProduct(productId, request))
                 .build();

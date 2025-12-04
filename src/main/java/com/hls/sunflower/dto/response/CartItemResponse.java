@@ -11,12 +11,17 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CartItemResponse {
     private String id;
-
     private int quantity;
-
     private String addedAt;
-
     private String thumbnailUrl;
-
     private Double price;
+
+    // Product information
+    private String productId;
+    private String productName;
+
+    // Variant information
+    private String variantId;
+    private String size;
+    private Integer availableStock;
 }
