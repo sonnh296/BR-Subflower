@@ -31,17 +31,12 @@ public class MyCorsConfig {
         config.addAllowedMethod("DELETE");
         config.addAllowedMethod("OPTIONS");
 
-        // Cho phép tất cả các header
-        config.addAllowedHeader("*");
-
-        // Expose headers để frontend có thể đọc
-        config.addExposedHeader("Authorization");
+        // Cho phép các header cụ thể
+        config.addAllowedHeader("Authorization");
+        config.addAllowedHeader("Content-Type");
 
         // Cho phép credentials (cookie, authorization headers)
         config.setAllowCredentials(true);
-
-        // Tăng thời gian cache cho preflight request
-        config.setMaxAge(3600L);
 
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
