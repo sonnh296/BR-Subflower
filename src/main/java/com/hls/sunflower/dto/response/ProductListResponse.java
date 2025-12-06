@@ -1,5 +1,6 @@
 package com.hls.sunflower.dto.response;
 
+import java.util.List;
 import java.util.Set;
 
 import lombok.AllArgsConstructor;
@@ -19,6 +20,10 @@ public class ProductListResponse {
     private String description;
 
     private String thumbnailUrl; // Only one image for list view
+
+    private List<String> imageUrls; // Add full list of image URLs
+
+    private List<ProductVariantResponse> variants; // Add variants for edit functionality
 
     private Set<ProductItemResponse> productItem;
 }

@@ -108,6 +108,7 @@ public class OrderServiceImpl implements OrderService {
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(cartItem.getProduct())
+                    .productVariant(variant) // Add variant to order item
                     .quantity(cartItem.getQuantity())
                     .priceAtOrder(priceAtOrder)
                     .build();

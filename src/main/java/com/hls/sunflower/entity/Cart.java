@@ -16,8 +16,8 @@ import lombok.*;
 @Builder
 @Table(name = "cart")
 @Data
-@EqualsAndHashCode(exclude = {"cartItems"})
-@ToString(exclude = {"cartItems"})
+@EqualsAndHashCode(exclude = {"user", "cartItems"})
+@ToString(exclude = {"user", "cartItems"})
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

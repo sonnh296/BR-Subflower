@@ -12,6 +12,8 @@ import lombok.*;
 @Builder
 @Table(name = "order_items")
 @Data
+@EqualsAndHashCode(exclude = {"order", "product", "productVariant"})
+@ToString(exclude = {"order", "product", "productVariant"})
 public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -25,6 +27,10 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false, referencedColumnName = "id")
     private Product product;
+
+    @ManyToOne
+    @JoinColumn(name = "product_variant_id", referencedColumnName = "id")
+    private ProductVariant productVariant;
 
     @Column(nullable = false)
     private Integer quantity;

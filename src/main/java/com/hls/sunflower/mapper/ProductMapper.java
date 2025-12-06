@@ -38,6 +38,8 @@ public interface ProductMapper {
     ProductResponse toProductResponse(Product product);
 
     @Mapping(source = "productImages", target = "thumbnailUrl", qualifiedByName = "mapFirstImageToUrl")
+    @Mapping(source = "productImages", target = "imageUrls", qualifiedByName = "mapImagesToUrls")
+    @Mapping(source = "variants", target = "variants", qualifiedByName = "mapVariantsToResponse")
     ProductListResponse toProductListResponse(Product product);
 
     @Mapping(target = "productImages", ignore = true)

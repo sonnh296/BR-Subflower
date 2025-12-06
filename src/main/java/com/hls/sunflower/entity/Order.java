@@ -18,6 +18,8 @@ import lombok.*;
 @Builder
 @Table(name = "orders")
 @Data
+@EqualsAndHashCode(exclude = {"user", "orderItems"})
+@ToString(exclude = {"user", "orderItems"})
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

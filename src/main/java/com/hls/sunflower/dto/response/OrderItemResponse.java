@@ -10,7 +10,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderItemResponse {
     String id;
-    ProductItemResponse productItem;
+    String productId;
+    String productName;
+    String variantId;
+    String size;
     Integer quantity;
     Double priceAtOrder;
+    String thumbnailUrl;
 }

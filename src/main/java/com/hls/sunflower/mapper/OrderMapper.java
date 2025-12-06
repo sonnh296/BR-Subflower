@@ -1,11 +1,58 @@
 package com.hls.sunflower.mapper;
 
-import org.mapstruct.Mapper;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+
+import com.hls.sunflower.dto.response.OrderItemResponse;
 import com.hls.sunflower.dto.response.OrderResponse;
 import com.hls.sunflower.entity.Order;
+import com.hls.sunflower.entity.OrderItem;
+import com.hls.sunflower.entity.Product;
+import com.hls.sunflower.entity.ProductVariant;
 
 @Mapper(componentModel = "spring")
-public interface OrderMapper {
-    OrderResponse toOrderResponse(Order order);
+public abstract class OrderMapper {
+    @Mapping(target = "orderItems", ignore = true)
+    public abstract OrderResponse toOrderResponse(Order order);
+
+    @AfterMapping
+    protected void mapOrderItems(Order order, @MappingTarget OrderResponse orderResponse) {
+        if (order.getOrderItems() != null) {
+            List<OrderItemResponse> orderItemResponses = new ArrayList<>();
+            for (OrderItem orderItem : order.getOrderItems()) {
+                orderItemResponses.add(toOrderItemResponse(orderItem));
+            }
+            orderResponse.setOrderItems(orderItemResponses);
+        }
+    }
+
+    protected OrderItemResponse toOrderItemResponse(OrderItem orderItem) {
+        if (orderItem == null) {
+            return null;
+        }
+
+        Product product = orderItem.getProduct();
+        ProductVariant variant = orderItem.getProductVariant();
+
+        String thumbnailUrl = "/noavatar.png";
+        if (product != null && product.getProductImages() != null && !product.getProductImages().isEmpty()) {
+            thumbnailUrl = product.getProductImages().get(0).getImageUrl();
+        }
+
+        return OrderItemResponse.builder()
+                .id(orderItem.getId())
+                .productId(product != null ? product.getId() : null)
+                .productName(product != null ? product.getName() : null)
+                .variantId(variant != null ? variant.getId() : null)
+                .size(variant != null ? variant.getSize() : null)
+                .quantity(orderItem.getQuantity())
+                .priceAtOrder(orderItem.getPriceAtOrder())
+                .thumbnailUrl(thumbnailUrl)
+                .build();
+    }
 }
