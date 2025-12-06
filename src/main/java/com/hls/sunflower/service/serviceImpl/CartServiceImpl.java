@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hls.sunflower.dao.*;
 import com.hls.sunflower.dto.request.CartItemQuantityRequest;
@@ -183,6 +184,25 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
+    public void deleteCartItem(String cartItemId) {
+        Users user = getMyInfo();
+        Cart cart = cartRepository
+                .findByUserId(user.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_EXISTED));
+
+        CartItem cartItem = cartItemRepository
+                .findById(cartItemId)
+                .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_EXISTED));
+
+        if (!cartItem.getCart().getId().equals(cart.getId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        cartItemRepository.delete(cartItem);
+    }
+
+    @Override
     public CartItemResponse updateCartItemQuantity(String cartItemId, CartItemQuantityRequest request) {
         CartItem cartItem = cartItemRepository
                 .findCartItemWithProductAndImagesById(cartItemId)
@@ -207,11 +227,6 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_EXISTED));
 
         return mapToCartItemResponse(updatedCartItem);
-    }
-
-    @Override
-    public void deleteCartItem(String cartItemId) {
-        cartItemRepository.deleteById(cartItemId);
     }
 
     public Users getMyInfo() {

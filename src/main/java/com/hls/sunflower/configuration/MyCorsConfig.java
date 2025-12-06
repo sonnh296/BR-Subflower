@@ -27,6 +27,7 @@ public class MyCorsConfig {
         config.addAllowedMethod("GET");
         config.addAllowedMethod("POST");
         config.addAllowedMethod("PUT");
+        config.addAllowedMethod("PATCH");
         config.addAllowedMethod("DELETE");
 
         // Cho phép các header cụ thể

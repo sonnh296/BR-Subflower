@@ -25,7 +25,7 @@ public class BannerController {
     }
 
     @PostMapping("")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<BannerResponse> createBanner(@RequestBody BannerRequest request) {
         return ApiResponse.<BannerResponse>builder()
                 .result(bannerService.createBanner(request))
@@ -33,7 +33,7 @@ public class BannerController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<BannerResponse> updateBanner(@PathVariable String id, @RequestBody BannerRequest request) {
         return ApiResponse.<BannerResponse>builder()
                 .result(bannerService.updateBanner(id, request))
@@ -41,14 +41,14 @@ public class BannerController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<String> deleteBanner(@PathVariable String id) {
         bannerService.deleteBanner(id);
         return ApiResponse.<String>builder().result("Banner deleted").build();
     }
 
     @PostMapping("/{id}/image")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<BannerResponse> uploadBannerImage(
             @PathVariable String id, @RequestParam("image") MultipartFile image) {
         // Delegate upload to BannerService which handles Azure storage and updates the Banner record

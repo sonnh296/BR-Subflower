@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfiguration {
 
     private final String[] PUBLIC_ENDPOINTS = {
@@ -33,6 +33,8 @@ public class SecurityConfiguration {
         "/api/fashion-advisor/**"
     };
 
+    private final String[] PUBLIC_GET_ENDPOINTS = {"/products/**", "/news/**", "/banners/**", "/roles"};
+
     @Autowired
     @Lazy
     private CustomJwtDecoder customJwtDecoder;
@@ -45,7 +47,7 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(configurer -> configurer
-                .requestMatchers(HttpMethod.GET)
+                .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
                 .permitAll()
                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
                 .permitAll()
@@ -73,7 +75,8 @@ public class SecurityConfiguration {
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         // chuyển đổi các quyền từ token thành các đối tượng GrantedAuthority của Spring Security
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("SCOPE_");
+        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);

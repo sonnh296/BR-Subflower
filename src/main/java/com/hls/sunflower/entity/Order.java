@@ -5,6 +5,7 @@ import java.util.Set;
 
 import jakarta.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hls.sunflower.enums.OrderStatus;
 
@@ -30,7 +31,7 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false, referencedColumnName = "id")
     private Users user;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<OrderItem> orderItems;
 
@@ -51,9 +52,11 @@ public class Order {
     private String notes;
 
     @Column(name = "created_at")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime updatedAt;
 
     @PrePersist

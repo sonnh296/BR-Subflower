@@ -27,9 +27,7 @@ public class Cart {
     @JoinColumn(name = "user_id")
     private Users user;
 
-    @OneToMany(
-            mappedBy = "cart",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<CartItem> cartItems;
 }

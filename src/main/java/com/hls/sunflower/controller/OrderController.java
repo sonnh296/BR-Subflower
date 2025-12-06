@@ -47,7 +47,7 @@ public class OrderController {
     }
 
     @GetMapping("")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<Page<OrderResponse>> getAllOrders(
             @RequestParam(name = "field", required = false, defaultValue = "createdAt") String field,
             @RequestParam(name = "pageNumber", required = false, defaultValue = "0") Integer pageNumber,
@@ -59,7 +59,7 @@ public class OrderController {
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<Page<OrderResponse>> getOrdersByStatus(
             @PathVariable OrderStatus status,
             @RequestParam(name = "field", required = false, defaultValue = "createdAt") String field,
@@ -72,7 +72,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{orderId}/status")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<OrderResponse> updateOrderStatus(
             @PathVariable String orderId, @Valid @RequestBody OrderStatusUpdateRequest request) {
         ApiResponse<OrderResponse> apiResponse = new ApiResponse<>();

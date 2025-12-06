@@ -41,7 +41,7 @@ public class NewsController {
     }
 
     @PostMapping("")
-    // TODO: Re-enable after fixing authorization: @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<NewsResponse> createNews(@RequestBody NewsRequest request) {
         // Debug: Log user authorities
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -54,7 +54,7 @@ public class NewsController {
     }
 
     @PutMapping("/{id}")
-    // TODO: Re-enable after fixing authorization: @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<NewsResponse> updateNews(@PathVariable String id, @RequestBody NewsRequest request) {
         return ApiResponse.<NewsResponse>builder()
                 .result(newsService.updateNews(id, request))
@@ -62,14 +62,14 @@ public class NewsController {
     }
 
     @DeleteMapping("/{id}")
-    // TODO: Re-enable after fixing authorization: @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<String> deleteNews(@PathVariable String id) {
         newsService.deleteNews(id);
         return ApiResponse.<String>builder().result("News deleted").build();
     }
 
     @PostMapping("/{id}/image")
-    // TODO: Re-enable after fixing authorization: @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_admin')")
     public ApiResponse<NewsResponse> uploadNewsImage(
             @PathVariable String id, @RequestParam("image") MultipartFile image) {
         // Delegate upload to the service which handles Azure storage and updating the News record

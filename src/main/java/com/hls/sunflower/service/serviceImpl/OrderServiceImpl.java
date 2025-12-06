@@ -121,15 +121,19 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
 
         // Clear cart after order creation
-        cartItemRepository.deleteAll(cartItems);
+        cartItemRepository.deleteAll(cart.getCartItems());
+        cart.getCartItems().clear();
+        cartRepository.save(cart);
 
         return orderMapper.toOrderResponse(savedOrder);
     }
 
     @Override
+    @Transactional
     public OrderResponse getOrderById(String orderId) {
-        Order order =
-                orderRepository.findById(orderId).orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));
+        Order order = orderRepository
+                .findByIdWithItems(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));
 
         // Check if user has permission to view this order
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -140,7 +144,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Check if user is admin or the order owner
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("SCOPE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("SCOPE_ROLE_admin"));
 
         if (!isAdmin && !order.getUser().getId().equals(user.getId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);

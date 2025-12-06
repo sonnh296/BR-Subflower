@@ -3,10 +3,8 @@ package com.hls.sunflower.mapper;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 import com.hls.sunflower.dto.response.OrderItemResponse;
 import com.hls.sunflower.dto.response.OrderResponse;
@@ -17,18 +15,18 @@ import com.hls.sunflower.entity.ProductVariant;
 
 @Mapper(componentModel = "spring")
 public abstract class OrderMapper {
-    @Mapping(target = "orderItems", ignore = true)
+    @Mapping(target = "orderItems", expression = "java(mapOrderItems(order))")
     public abstract OrderResponse toOrderResponse(Order order);
 
-    @AfterMapping
-    protected void mapOrderItems(Order order, @MappingTarget OrderResponse orderResponse) {
-        if (order.getOrderItems() != null) {
-            List<OrderItemResponse> orderItemResponses = new ArrayList<>();
-            for (OrderItem orderItem : order.getOrderItems()) {
-                orderItemResponses.add(toOrderItemResponse(orderItem));
-            }
-            orderResponse.setOrderItems(orderItemResponses);
+    protected List<OrderItemResponse> mapOrderItems(Order order) {
+        if (order.getOrderItems() == null) {
+            return null;
         }
+        List<OrderItemResponse> orderItemResponses = new ArrayList<>();
+        for (OrderItem orderItem : order.getOrderItems()) {
+            orderItemResponses.add(toOrderItemResponse(orderItem));
+        }
+        return orderItemResponses;
     }
 
     protected OrderItemResponse toOrderItemResponse(OrderItem orderItem) {
@@ -40,7 +38,9 @@ public abstract class OrderMapper {
         ProductVariant variant = orderItem.getProductVariant();
 
         String thumbnailUrl = "/noavatar.png";
-        if (product != null && product.getProductImages() != null && !product.getProductImages().isEmpty()) {
+        if (product != null
+                && product.getProductImages() != null
+                && !product.getProductImages().isEmpty()) {
             thumbnailUrl = product.getProductImages().get(0).getImageUrl();
         }
 

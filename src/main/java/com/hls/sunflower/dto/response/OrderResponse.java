@@ -3,6 +3,7 @@ package com.hls.sunflower.dto.response;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hls.sunflower.enums.OrderStatus;
 
 import lombok.*;
@@ -22,6 +23,10 @@ public class OrderResponse {
     String deliveryAddress;
     String phoneNumber;
     String notes;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     LocalDateTime createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     LocalDateTime updatedAt;
 }
