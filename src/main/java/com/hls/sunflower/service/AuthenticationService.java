@@ -29,4 +29,8 @@ public interface AuthenticationService {
     AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException;
 
     AuthenticationResponse register(UserCreationRequest request);
+
+    String verifyEmail(String token);
+
+    void resendVerificationEmail(String email);
 }

@@ -36,10 +36,22 @@ public class Users {
     @Column
     private String email;
 
+    @Column
+    private String phoneNumber;
+
     private String avatarUrl;
 
     @Column
     private Boolean oAuth2;
+
+    @Column
+    private Boolean emailVerified;
+
+    @Column
+    private String verificationToken;
+
+    @Column
+    private java.time.LocalDateTime verificationTokenExpiry;
 
     @OneToMany(
             mappedBy = "user",
@@ -55,6 +67,9 @@ public class Users {
     public void onCreate() {
         if (oAuth2 == null) {
             oAuth2 = false;
+        }
+        if (emailVerified == null) {
+            emailVerified = false;
         }
     }
 }

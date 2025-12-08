@@ -23,17 +23,26 @@ public class SecurityConfiguration {
 
     private final String[] PUBLIC_ENDPOINTS = {
         "/users/registration",
+        "/auth/register",
         "/auth/token",
         "/auth/outbound/authentication",
         "/auth/introspect",
         "/auth/logout",
         "/auth/refresh",
+        "/auth/verify-email",
+        "/auth/resend-verification",
         "/api/virtual-try-on",
         "/cloudinary/upload/image",
         "/api/fashion-advisor/**"
     };
 
-    private final String[] PUBLIC_GET_ENDPOINTS = {"/products/**", "/news/**", "/banners/**", "/roles"};
+    private final String[] PUBLIC_GET_ENDPOINTS = {
+        "/products/**",
+        "/news/**",
+        "/banners/**",
+        "/roles",
+        "/auth/verify-email"
+    };
 
     @Autowired
     @Lazy

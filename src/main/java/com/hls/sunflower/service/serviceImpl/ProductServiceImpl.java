@@ -127,20 +127,50 @@ public class ProductServiceImpl implements ProductService {
         // FIXED: Only update variants if they are explicitly provided and not empty
         // This prevents accidental deletion of variants when updating other fields
         if (request.getVariants() != null && !request.getVariants().isEmpty()) {
-            product.getVariants().clear();
-            request.getVariants().forEach(variantRequest -> {
-                ProductVariant variant = ProductVariant.builder()
-                        .size(variantRequest.getSize())
-                        .price(variantRequest.getPrice())
-                        .stock(variantRequest.getStock())
-                        .product(product)
-                        .build();
-                product.getVariants().add(variant);
-            });
+            // Instead of clearing all variants (which causes FK constraint errors),
+            // we update existing variants and add new ones
+            List<ProductVariant> existingVariants = product.getVariants();
+
+            // Create a map of existing variants by index for easier access
+            // Update existing variants or create new ones
+            for (int i = 0; i < request.getVariants().size(); i++) {
+                var variantRequest = request.getVariants().get(i);
+
+                if (i < existingVariants.size()) {
+                    // Update existing variant in place
+                    ProductVariant existingVariant = existingVariants.get(i);
+                    existingVariant.setSize(variantRequest.getSize());
+                    existingVariant.setPrice(variantRequest.getPrice());
+                    existingVariant.setStock(variantRequest.getStock());
+                    log.debug("Updated existing variant {} for productId={}", existingVariant.getId(), productId);
+                } else {
+                    // Add new variant
+                    ProductVariant newVariant = ProductVariant.builder()
+                            .size(variantRequest.getSize())
+                            .price(variantRequest.getPrice())
+                            .stock(variantRequest.getStock())
+                            .product(product)
+                            .build();
+                    existingVariants.add(newVariant);
+                    log.debug("Added new variant for productId={}", productId);
+                }
+            }
+
+            // Note: We don't remove excess variants to avoid FK constraint violations
+            // If there are more existing variants than in the request, they will remain unchanged
+            if (existingVariants.size() > request.getVariants().size()) {
+                log.warn(
+                        "Product {} has {} existing variants but only {} provided in update. Excess variants kept to avoid FK constraint violations.",
+                        productId,
+                        existingVariants.size(),
+                        request.getVariants().size());
+            }
+
             log.debug(
-                    "Updated {} variants for productId={}",
+                    "Updated variants for productId={}: {} provided, {} existing",
+                    productId,
                     request.getVariants().size(),
-                    productId);
+                    existingVariants.size());
         } else {
             log.debug(
                     "Keeping existing {} variants for productId={}",

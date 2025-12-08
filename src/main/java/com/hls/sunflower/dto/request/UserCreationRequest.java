@@ -18,5 +18,7 @@ public class UserCreationRequest {
 
     private String email;
 
+    private String phoneNumber;
+
     private String avatarUrl;
 }

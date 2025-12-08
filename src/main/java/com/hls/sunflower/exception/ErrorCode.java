@@ -24,7 +24,12 @@ public enum ErrorCode {
     CART_IS_EMPTY(5002, "Cart is empty", HttpStatus.BAD_REQUEST),
     ORDER_CANNOT_BE_CANCELLED(5003, "Order cannot be cancelled", HttpStatus.BAD_REQUEST),
     INVALID_ORDER_STATUS_TRANSITION(5004, "Invalid order status transition", HttpStatus.BAD_REQUEST),
-    RESOURCE_NOT_FOUND(6001, "Resource not found", HttpStatus.NOT_FOUND);
+    RESOURCE_NOT_FOUND(6001, "Resource not found", HttpStatus.NOT_FOUND),
+    EMAIL_ALREADY_EXISTS(7001, "Email already exists", HttpStatus.BAD_REQUEST),
+    INVALID_VERIFICATION_TOKEN(7002, "Invalid verification token", HttpStatus.BAD_REQUEST),
+    VERIFICATION_TOKEN_EXPIRED(7003, "Verification token expired", HttpStatus.BAD_REQUEST),
+    EMAIL_ALREADY_VERIFIED(7004, "Email already verified", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_VERIFIED(7005, "Email not verified. Please verify your email first", HttpStatus.FORBIDDEN);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

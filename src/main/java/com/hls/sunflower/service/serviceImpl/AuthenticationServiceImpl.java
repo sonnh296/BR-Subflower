@@ -25,6 +25,7 @@ import com.hls.sunflower.entity.Users;
 import com.hls.sunflower.exception.AppException;
 import com.hls.sunflower.exception.ErrorCode;
 import com.hls.sunflower.service.AuthenticationService;
+import com.hls.sunflower.service.EmailService;
 import com.hls.sunflower.service.UserService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -45,6 +46,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final OutboundIdentityClient outboundIdentityClient;
     private final OutBoundUserClient outBoundUserClient;
     private final UserService userService;
+    private final EmailService emailService;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -81,6 +83,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             OutboundIdentityClient outboundIdentityClient,
             OutBoundUserClient outBoundUserClient,
             UserService userService,
+            EmailService emailService,
             RestTemplate restTemplate) {
         this.usersRepository = usersRepository;
         this.roleRepository = roleRepository;
@@ -89,6 +92,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.outboundIdentityClient = outboundIdentityClient;
         this.outBoundUserClient = outBoundUserClient;
         this.userService = userService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -236,18 +240,101 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse register(UserCreationRequest request) {
-        // Create the user
-        userService.addUser(request);
+        // Check if user already exists
+        if (usersRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
 
-        // Retrieve the created user
-        var user = usersRepository
-                .findByUsername(request.getUsername())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (usersRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
 
-        // Generate token
-        var token = generateToken(user);
+        // Create the user with emailVerified = false
+        Users user = Users.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
+                .fullName(request.getFullName())
+                .phoneNumber(request.getPhoneNumber())
+                .oAuth2(false)
+                .emailVerified(false)
+                .verificationToken(UUID.randomUUID().toString())
+                .verificationTokenExpiry(java.time.LocalDateTime.now().plusHours(24))
+                .build();
 
-        return AuthenticationResponse.builder().token(token).authenticated(true).build();
+        // Add role USER
+        Set<UserRole> userRoles = new HashSet<>();
+        UserRole userRole = new UserRole();
+        userRole.setRole(roleRepository.findByRoleName("USER"));
+        userRole.setUser(user);
+        userRoles.add(userRole);
+        user.setUser_roles(userRoles);
+
+        // Save user
+        user = usersRepository.save(user);
+
+        // Send verification email
+        try {
+            emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), user.getVerificationToken());
+            // Don't log here - EmailServiceImpl will log success or failure
+        } catch (Exception e) {
+            // EmailServiceImpl already handles exceptions, this shouldn't be reached
+            log.warn("Unexpected error during email sending: {}", e.getMessage());
+        }
+
+        // Return response indicating email verification is required
+        return AuthenticationResponse.builder().authenticated(false).token(null).build();
+    }
+
+    @Override
+    public String verifyEmail(String token) {
+        Users user = usersRepository
+                .findByVerificationToken(token)
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_VERIFICATION_TOKEN));
+
+        // Check if token is expired
+        if (user.getVerificationTokenExpiry().isBefore(java.time.LocalDateTime.now())) {
+            throw new AppException(ErrorCode.VERIFICATION_TOKEN_EXPIRED);
+        }
+
+        // Check if already verified
+        if (user.getEmailVerified()) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+        }
+
+        // Mark email as verified
+        user.setEmailVerified(true);
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiry(null);
+        usersRepository.save(user);
+
+        // Send welcome email
+        try {
+            emailService.sendWelcomeEmail(user.getEmail(), user.getUsername());
+        } catch (Exception e) {
+            log.error("Failed to send welcome email", e);
+        }
+
+        log.info("Email verified successfully for user: {}", user.getUsername());
+        return "Email verified successfully!";
+    }
+
+    @Override
+    public void resendVerificationEmail(String email) {
+        Users user = usersRepository.findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (user.getEmailVerified()) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+        }
+
+        // Generate new verification token
+        user.setVerificationToken(UUID.randomUUID().toString());
+        user.setVerificationTokenExpiry(java.time.LocalDateTime.now().plusHours(24));
+        usersRepository.save(user);
+
+        // Resend verification email
+        emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), user.getVerificationToken());
+        log.info("Verification email resent to: {}", user.getEmail());
     }
 
     private SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {

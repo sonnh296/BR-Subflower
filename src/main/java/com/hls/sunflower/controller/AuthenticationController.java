@@ -75,4 +75,20 @@ public class AuthenticationController {
         apiResponse.setResult(res);
         return apiResponse;
     }
+
+    @GetMapping("/verify-email")
+    public ApiResponse<String> verifyEmail(@RequestParam("token") String token) {
+        String message = authenticationService.verifyEmail(token);
+        ApiResponse<String> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(message);
+        return apiResponse;
+    }
+
+    @PostMapping("/resend-verification")
+    public ApiResponse<String> resendVerification(@RequestParam("email") String email) {
+        authenticationService.resendVerificationEmail(email);
+        ApiResponse<String> apiResponse = new ApiResponse<>();
+        apiResponse.setResult("Verification email sent successfully");
+        return apiResponse;
+    }
 }
