@@ -1,5 +1,6 @@
 package com.hls.sunflower.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -12,10 +13,12 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ExchangeTokenResponse {
     String accessToken;
     Long expiresIn;
     String refreshToken;
     String scope;
     String tokenType;
+    String idToken; // map to id_token from Google's response
 }

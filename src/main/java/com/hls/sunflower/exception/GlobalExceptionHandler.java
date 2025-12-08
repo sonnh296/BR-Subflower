@@ -36,7 +36,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException exception) {
+    ResponseEntity<ApiResponse> handlingRuntimeException(Exception exception) {
+        // Use Exception parameter to match the annotation and avoid resolver mismatch
         log.error("Exception: ", exception);
         ApiResponse apiResponse = new ApiResponse();
 

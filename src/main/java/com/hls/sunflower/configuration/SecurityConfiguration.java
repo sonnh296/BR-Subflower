@@ -37,11 +37,7 @@ public class SecurityConfiguration {
     };
 
     private final String[] PUBLIC_GET_ENDPOINTS = {
-        "/products/**",
-        "/news/**",
-        "/banners/**",
-        "/roles",
-        "/auth/verify-email"
+        "/products/**", "/news/**", "/banners/**", "/roles", "/auth/verify-email"
     };
 
     @Autowired
@@ -56,6 +52,10 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(configurer -> configurer
+                // DEV: allow all methods on products for easier local testing (cover both with and without /api
+                // context-path)
+                .requestMatchers("/products/**", "/api/products/**")
+                .permitAll()
                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
                 .permitAll()
                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)

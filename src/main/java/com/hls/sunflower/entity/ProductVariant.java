@@ -12,14 +12,16 @@ import lombok.*;
 @Builder
 @Table(name = "product_variant")
 @Data
-@EqualsAndHashCode(exclude = {"product"})
-@ToString(exclude = {"product"})
+@EqualsAndHashCode(exclude = {"product", "productOption"})
+@ToString(exclude = {"product", "productOption"})
 public class ProductVariant {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    private String size;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "size_id")
+    private Size size;
 
     private Double price;
 
@@ -28,4 +30,8 @@ public class ProductVariant {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_option_id")
+    private ProductOption productOption;
 }

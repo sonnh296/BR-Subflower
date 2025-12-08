@@ -48,9 +48,12 @@ public class EmailServiceImpl implements EmailService {
 
             log.info("✅ Verification email sent successfully to: {}", to);
         } catch (Exception e) {
-            log.warn("⚠️ Failed to send verification email to: {} - Email service may not be configured. Error: {}",
-                    to, e.getMessage());
-            log.info("💡 User registration will continue without email verification. To enable email, please configure SMTP settings in application.yml");
+            log.warn(
+                    "⚠️ Failed to send verification email to: {} - Email service may not be configured. Error: {}",
+                    to,
+                    e.getMessage());
+            log.info(
+                    "💡 User registration will continue without email verification. To enable email, please configure SMTP settings in application.yml");
             // Don't throw exception - allow registration to continue without email verification
         }
     }
@@ -77,8 +80,10 @@ public class EmailServiceImpl implements EmailService {
 
             log.info("Welcome email sent to: {}", to);
         } catch (Exception e) {
-            log.warn("Failed to send welcome email to: {} - Email service may not be configured. Error: {}",
-                    to, e.getMessage());
+            log.warn(
+                    "Failed to send welcome email to: {} - Email service may not be configured. Error: {}",
+                    to,
+                    e.getMessage());
             // Don't throw exception for welcome email failure
         }
     }

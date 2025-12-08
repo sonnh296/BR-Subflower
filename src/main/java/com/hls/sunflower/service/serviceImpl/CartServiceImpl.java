@@ -1,5 +1,6 @@
 package com.hls.sunflower.service.serviceImpl;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -72,7 +73,7 @@ public class CartServiceImpl implements CartService {
 
         if (variant != null) {
             price = variant.getPrice();
-            size = variant.getSize();
+            size = variant.getSize() != null ? variant.getSize().getName() : null;
             availableStock = variant.getStock();
         }
 
@@ -108,6 +109,11 @@ public class CartServiceImpl implements CartService {
             newCart.setUser(user);
             return cartRepository.save(newCart);
         });
+
+        // Ensure cartItems is initialized to avoid NPEs when using streams or add()
+        if (cart.getCartItems() == null) {
+            cart.setCartItems(new HashSet<>());
+        }
 
         // Support both product variant ID and product ID for backward compatibility
         String productVariantId = request.getCartItem().getProductVariantId();

@@ -20,7 +20,8 @@ public interface AuthenticationService {
     // check username, password -> generate token
     AuthenticationResponse authenticate(AuthenticationRequest request);
 
-    AuthenticationResponse outboundAuthenticate(String code);
+    // Accept an optional redirectUri so the frontend can supply the exact redirect URI used during authorization
+    AuthenticationResponse outboundAuthenticate(String code, String redirectUri);
 
     String generateToken(Users user);
 

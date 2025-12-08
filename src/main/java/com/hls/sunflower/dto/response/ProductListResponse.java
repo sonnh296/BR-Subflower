@@ -26,4 +26,14 @@ public class ProductListResponse {
     private List<ProductVariantResponse> variants; // Add variants for edit functionality
 
     private Set<ProductItemResponse> productItem;
+
+    // Category info for list responses
+    private String categoryId;
+    private String categoryName;
+
+    // New: include product options in list response to support frontend
+    private List<ProductOptionResponse> productOptions;
+
+    // New: options with grouped variants for list responses as well
+    private List<ProductOptionWithVariantsResponse> optionsWithVariants;
 }

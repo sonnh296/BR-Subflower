@@ -16,8 +16,8 @@ import lombok.*;
 @Builder
 @Table(name = "product")
 @Data
-@EqualsAndHashCode(exclude = {"productImages", "variants"})
-@ToString(exclude = {"productImages", "variants"})
+@EqualsAndHashCode(exclude = {"productImages", "variants", "productOptions"})
+@ToString(exclude = {"productImages", "variants", "productOptions"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -40,6 +40,16 @@ public class Product {
     private LocalDateTime availableFrom;
     private LocalDateTime availableTo;
 
+    // New: category relationship
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    // New: product options (e.g., Full set, Top only, Skirt only)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Builder.Default
+    private List<ProductOption> productOptions = new ArrayList<>();
+
     // Helper methods to manage bidirectional relationship
     public void addProductImage(ProductImage image) {
         productImages.add(image);
@@ -59,5 +69,15 @@ public class Product {
     public void removeVariant(ProductVariant variant) {
         variants.remove(variant);
         variant.setProduct(null);
+    }
+
+    public void addProductOption(ProductOption option) {
+        productOptions.add(option);
+        option.setProduct(this);
+    }
+
+    public void removeProductOption(ProductOption option) {
+        productOptions.remove(option);
+        option.setProduct(null);
     }
 }

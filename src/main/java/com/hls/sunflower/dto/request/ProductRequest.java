@@ -18,4 +18,10 @@ public class ProductRequest {
     private List<ProductVariantRequest> variants;
     private String availableFrom;
     private String availableTo;
+    private String categoryId;
+    private List<ProductOptionRequest> productOptions;
+
+    // New: accept grouped variants from frontend: each group is a variant type (variantName)
+    // and contains multiple size entries. Backward-compatible: this field is optional.
+    private List<ProductVariantGroupRequest> variantGroups;
 }

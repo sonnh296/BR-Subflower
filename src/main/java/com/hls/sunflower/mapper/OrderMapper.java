@@ -49,7 +49,10 @@ public abstract class OrderMapper {
                 .productId(product != null ? product.getId() : null)
                 .productName(product != null ? product.getName() : null)
                 .variantId(variant != null ? variant.getId() : null)
-                .size(variant != null ? variant.getSize() : null)
+                .size(
+                        variant != null && variant.getSize() != null
+                                ? variant.getSize().getName()
+                                : null)
                 .quantity(orderItem.getQuantity())
                 .priceAtOrder(orderItem.getPriceAtOrder())
                 .thumbnailUrl(thumbnailUrl)

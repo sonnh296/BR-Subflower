@@ -33,8 +33,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/outbound/authentication")
-    ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestParam("code") String code) {
-        var result = authenticationService.outboundAuthenticate(code);
+    ApiResponse<AuthenticationResponse> outboundAuthenticate(
+            @RequestParam("code") String code,
+            @RequestParam(value = "redirect_uri", required = false) String redirectUri) {
+        var result = authenticationService.outboundAuthenticate(code, redirectUri);
         ApiResponse<AuthenticationResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(result);
         return apiResponse;

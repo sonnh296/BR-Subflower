@@ -37,7 +37,7 @@ public class CartItemMapper {
 
         if (variant != null) {
             builder.variantId(variant.getId());
-            builder.size(variant.getSize());
+            builder.size(variant.getSize() != null ? variant.getSize().getName() : null);
             builder.availableStock(variant.getStock());
         }
 

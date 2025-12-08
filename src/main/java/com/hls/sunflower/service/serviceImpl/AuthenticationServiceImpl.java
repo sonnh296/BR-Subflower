@@ -1,5 +1,7 @@
 package com.hls.sunflower.service.serviceImpl;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hls.sunflower.dao.InvalidatedTokenRepository;
 import com.hls.sunflower.dao.RoleRepository;
 import com.hls.sunflower.dao.UsersRepository;
@@ -18,6 +22,7 @@ import com.hls.sunflower.dao.httpClient.OutBoundUserClient;
 import com.hls.sunflower.dao.httpClient.OutboundIdentityClient;
 import com.hls.sunflower.dto.request.*;
 import com.hls.sunflower.dto.response.AuthenticationResponse;
+import com.hls.sunflower.dto.response.ExchangeTokenResponse;
 import com.hls.sunflower.dto.response.IntrospectResponse;
 import com.hls.sunflower.entity.InvalidatedToken;
 import com.hls.sunflower.entity.UserRole;
@@ -33,6 +38,8 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import feign.FeignException;
+import feign.Response;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,6 +51,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final InvalidatedTokenRepository invalidatedTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final OutboundIdentityClient outboundIdentityClient;
+    private final RestTemplate restTemplate;
     private final OutBoundUserClient outBoundUserClient;
     private final UserService userService;
     private final EmailService emailService;
@@ -81,15 +89,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             InvalidatedTokenRepository invalidatedTokenRepository,
             PasswordEncoder passwordEncoder,
             OutboundIdentityClient outboundIdentityClient,
+            RestTemplate restTemplate,
             OutBoundUserClient outBoundUserClient,
             UserService userService,
-            EmailService emailService,
-            RestTemplate restTemplate) {
+            EmailService emailService) {
         this.usersRepository = usersRepository;
         this.roleRepository = roleRepository;
         this.invalidatedTokenRepository = invalidatedTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.outboundIdentityClient = outboundIdentityClient;
+        this.restTemplate = restTemplate;
         this.outBoundUserClient = outBoundUserClient;
         this.userService = userService;
         this.emailService = emailService;
@@ -126,14 +135,99 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public AuthenticationResponse outboundAuthenticate(String code) {
-        var response = outboundIdentityClient.exchangeToken(ExchangeTokenRequest.builder()
-                .code(code)
-                .clientId(CLIENT_ID)
-                .clientSecret(CLIENT_SECRET)
-                .redirectUri(REDIRECT_URI)
-                .grantType(GRANT_TYPE)
-                .build());
+    public AuthenticationResponse outboundAuthenticate(String code, String redirectUri) {
+        // Determine which redirect URI to send: prefer the one provided by the frontend (if any), otherwise use
+        // configured value
+        String effectiveRedirectUri = (redirectUri != null && !redirectUri.isBlank()) ? redirectUri : REDIRECT_URI;
+
+        // Build the token exchange form using snake_case keys required by Google
+        Map<String, String> form = new HashMap<>();
+        form.put("code", code);
+        form.put("client_id", CLIENT_ID);
+        form.put("client_secret", CLIENT_SECRET);
+        form.put("redirect_uri", effectiveRedirectUri);
+        form.put("grant_type", GRANT_TYPE);
+
+        // Avoid logging secrets: redact client_secret when logging
+        Map<String, String> loggedForm = new HashMap<>(form);
+        if (loggedForm.containsKey("client_secret")) loggedForm.put("client_secret", "REDACTED");
+
+        log.info("Exchanging token with form: {}", loggedForm);
+
+        // Try REST exchange directly to avoid Feign decoding issues
+        String responseStr = null;
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED);
+
+            org.springframework.util.MultiValueMap<String, String> body =
+                    new org.springframework.util.LinkedMultiValueMap<>();
+            body.setAll(form);
+
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> requestEntity =
+                    new org.springframework.http.HttpEntity<>(body, headers);
+
+            org.springframework.http.ResponseEntity<String> resp =
+                    restTemplate.postForEntity("https://oauth2.googleapis.com/token", requestEntity, String.class);
+            responseStr = resp.getBody();
+            log.debug(
+                    "RestTemplate token endpoint response status={} headers={}",
+                    resp.getStatusCode(),
+                    resp.getHeaders());
+        } catch (Exception e) {
+            log.warn("RestTemplate token exchange failed, falling back to Feign: {}", e.toString());
+            // Fallback to Feign client (previous approach)
+            try {
+                Response feignResp = outboundIdentityClient.exchangeToken(form);
+                int status = feignResp.status();
+                log.debug("Feign token endpoint response status={} headers={}", status, feignResp.headers());
+
+                if (feignResp.body() != null) {
+                    try (InputStream is = feignResp.body().asInputStream()) {
+                        responseStr = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    } catch (Exception ioe) {
+                        log.error("Failed to read body from Feign response", ioe);
+                        responseStr = null;
+                    }
+                } else {
+                    responseStr = null;
+                }
+
+                if (status < 200 || status >= 300) {
+                    log.error("Google token exchange failed: status={}, body={}", status, responseStr);
+                    throw new AppException(ErrorCode.UNAUTHENTICATED);
+                }
+
+            } catch (FeignException fe) {
+                log.error(
+                        "Google token exchange failed (FeignException): status={}, body={}",
+                        fe.status(),
+                        fe.contentUTF8(),
+                        fe);
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            } catch (AppException ae) {
+                throw ae;
+            } catch (Exception ex) {
+                log.error("Unexpected error during Google token exchange", ex);
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+        }
+
+        log.info("Raw token response: {}", responseStr);
+
+        ExchangeTokenResponse response = null;
+        try {
+            if (responseStr == null || responseStr.isBlank()) {
+                log.error("Empty token response from identity provider");
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            response = mapper.readValue(responseStr, ExchangeTokenResponse.class);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse token response: {}", responseStr, e);
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         log.info("TOKEN RESPONSE {}", response);
 
